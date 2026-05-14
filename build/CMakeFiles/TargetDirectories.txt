@@ -834,6 +834,13 @@ D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/wifi_provisioning/CMake
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/wifi_provisioning/CMakeFiles/install.dir
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/wifi_provisioning/CMakeFiles/install/local.dir
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/wifi_provisioning/CMakeFiles/install/strip.dir
+D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/espressif__esp-modbus/CMakeFiles/__idf_espressif__esp-modbus.dir
+D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/espressif__esp-modbus/CMakeFiles/edit_cache.dir
+D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/espressif__esp-modbus/CMakeFiles/rebuild_cache.dir
+D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/espressif__esp-modbus/CMakeFiles/list_install_components.dir
+D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/espressif__esp-modbus/CMakeFiles/install.dir
+D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/espressif__esp-modbus/CMakeFiles/install/local.dir
+D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/espressif__esp-modbus/CMakeFiles/install/strip.dir
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/main/CMakeFiles/__idf_main.dir
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/main/CMakeFiles/edit_cache.dir
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/main/CMakeFiles/rebuild_cache.dir

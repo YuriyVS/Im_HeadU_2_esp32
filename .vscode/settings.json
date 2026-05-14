@@ -6,5 +6,6 @@
     "--background-index",
     "--query-driver=**",
     "--compile-commands-dir=d:\\Users\\sukharyev_uv\\workspace\\Im_HeadU_2\\build"
-  ]
+  ],
+  "idf.portWin": "COM3"
 }

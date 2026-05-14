@@ -9,7 +9,7 @@ idf_component_register(
     Block_FRAM.c
 
     INCLUDE_DIRS 
-    "include"       # optional, add here public include directories
+    "include"       # optional, add here public include directories    
 
     PRIV_INCLUDE_DIRS   # optional, add here private include directories
     REQUIRES            # optional, list the public requirements (component names)

@@ -559,6 +559,11 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
+  include("D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/espressif__esp-modbus/cmake_install.cmake")
+endif()
+
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for the subdirectory.
   include("D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/main/cmake_install.cmake")
 endif()
 
