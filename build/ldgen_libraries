@@ -38,6 +38,8 @@ D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/app_update/libapp_updat
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_app_format/libesp_app_format.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_bootloader_format/libesp_bootloader_format.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_mm/libesp_mm.a
+D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/espcoredump/libespcoredump.a
+D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_app_format/libesp_app_format.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_gdbstub/libesp_gdbstub.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/driver/libdriver.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_driver_gptimer/libesp_driver_gptimer.a
@@ -70,7 +72,6 @@ D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_security/libesp_sec
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/pthread/libpthread.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_driver_gpio/libesp_driver_gpio.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_pm/libesp_pm.a
-D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_app_format/libesp_app_format.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_bootloader_format/libesp_bootloader_format.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/app_update/libapp_update.a
 D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/esp_partition/libesp_partition.a

@@ -128,28 +128,60 @@ void vTaskSPI(void *pvParameters) {
 }
 
 // Пример реализации критической задачи
+// void vTaskModbus(void *pvParameters) {
+//     esp_task_wdt_add(NULL);
+//     mb_event_group_t event_mask;
+//     //const TickType_t xTicksToWait = portMAX_DELAY; // Ждем события вечно, не потребляя CPU
+//     //init_modbus_slave();
+//     while (1) {
+//         // Ожидание события (аналог обработки прерывания в RTOS)
+//         // Блокируется до тех пор, пока не придет запрос от Master (STM32)
+//         event_mask = mbc_slave_check_event(MB_EVENT_HOLDING_REG_WR | MB_EVENT_HOLDING_REG_RD);
+//         esp_task_wdt_reset();
+//         if (event_mask & MB_EVENT_HOLDING_REG_WR) {
+//             // Если STM32 что-то записал в ESP32
+//             ESP_LOGI("MODBUS", "STM32 обновил параметры управления");
+//             // Здесь можно добавить логику реакции на новые команды
+//         }
+
+//         if (event_mask & MB_EVENT_HOLDING_REG_RD) {
+//             // Если STM32 просто считал данные
+//             // Обновляем наш Heartbeat для следующего цикла
+//             //slave_data.heartbeat++; 
+//         }
+//         vTaskDelay(pdMS_TO_TICKS(10)); // Задача ушла спать на 10 мс
+//     }
+// }
+
 void vTaskModbus(void *pvParameters) {
-    esp_task_wdt_add(NULL);
-    mb_event_group_t event_mask;
-    //const TickType_t xTicksToWait = portMAX_DELAY; // Ждем события вечно, не потребляя CPU
-    //init_modbus_slave();
+    float voltage_value = 0;
+    uint8_t type; // Добавляем переменную для типа, которую требует функция
+    const mb_parameter_descriptor_t* param_descr = NULL; // Теперь будем использовать
+        
     while (1) {
-        // Ожидание события (аналог обработки прерывания в RTOS)
-        // Блокируется до тех пор, пока не придет запрос от Master (STM32)
-        event_mask = mbc_slave_check_event(MB_EVENT_HOLDING_REG_WR | MB_EVENT_HOLDING_REG_RD);
-        esp_task_wdt_reset();
-        if (event_mask & MB_EVENT_HOLDING_REG_WR) {
-            // Если STM32 что-то записал в ESP32
-            ESP_LOGI("MODBUS", "STM32 обновил параметры управления");
-            // Здесь можно добавить логику реакции на новые команды
+        // Запрашиваем параметр. Переменная type заполнится автоматически 
+        // значением из таблицы дескрипторов (например, PARAM_TYPE_FLOAT)
+        esp_err_t err = mbc_master_get_parameter(PARAM_VOLTAGE_ID, "Voltage", (uint8_t*)&voltage_value, &type);
+        
+        if (err == ESP_OK) {
+            DBMain.f50.Useti = voltage_value;
+        } else {
+            // Если произошла ошибка, получаем информацию о параметре из таблицы по его CID
+            if (mbc_master_get_cid_info(PARAM_VOLTAGE_ID, &param_descr) == ESP_OK) {
+                ESP_LOGE("MODBUS", "Ошибка параметра [%s] (Slave ID: %d, Addr: 0x%04X): %s", 
+                         param_descr->param_key, 
+                         param_descr->mb_slave_addr, 
+                         param_descr->mb_reg_start,
+                         esp_err_to_name(err));
+            }
         }
 
-        if (event_mask & MB_EVENT_HOLDING_REG_RD) {
-            // Если STM32 просто считал данные
-            // Обновляем наш Heartbeat для следующего цикла
-            //slave_data.heartbeat++; 
-        }
-        vTaskDelay(pdMS_TO_TICKS(10)); // Задача ушла спать на 10 мс
+        read_DB_Main_block_number(0);
+        read_DB_Main_single(GET_MB_ADDR(DBMain.f50.GenFreq));
+        read_DB_Main_single(GET_MB_ADDR(DBMain.b32));
+        read_DB_Main_start_size(GET_MB_ADDR(DBMain.f50.GenFreq), 10);
+
+        vTaskDelay(pdMS_TO_TICKS(100)); 
     }
 }
 
