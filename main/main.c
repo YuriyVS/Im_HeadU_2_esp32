@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#include "esp_task_wdt.h"
+
 #include "mbcontroller.h"
 
 #include "driver/spi_master.h"
@@ -54,17 +56,40 @@ void vTaskNetwork(void *pvParameters);
 
 void create_system_tasks(void);
 
+//#include "freertos/semphr.h" 
+
+SemaphoreHandle_t xDataMutex = NULL;
+
+SemaphoreHandle_t spi_sem = NULL;
+
 void app_main(void)
 {
-    init_spi_interface();
-    init_uart_communication();
-    init_interrupt_signal();
-    create_system_tasks();
+    // 1. Сначала системные объекты синхронизации (семафоры, очереди, мьютексы)
+    spi_sem = xSemaphoreCreateBinary();
+    xDataMutex = xSemaphoreCreateMutex(); // Если будете использовать для работы с DBMain и DBParameters
+
+    // 2. Инициализация СТРУКТУР ДАННЫХ (очень важно сделать ДО задач!)
     DBMain = DBMainInit;
     DBParameters = DBParametersFactory;
+    
+    // 3. Инициализация ПЕРИФЕРИИ (но без включения прерываний, если можно)
+    init_spi_interface();
+    init_uart_communication();
+
+    // 4. ЗАПУСК ЗАДАЧ
+    // Теперь задачи созданы и "спят" в ожидании ресурсов или событий
+    create_system_tasks();
+
+    // 5. ВКЛЮЧЕНИЕ ПРЕРЫВАНИЙ
+    // Теперь, если придет прерывание, всё готово к его обработке
+    init_interrupt_signal();
+
+    // 6. Основной цикл app_main (работает на приоритете 1)
     while (true) {
-        printf("Hello from app_main!\n");
-        sleep(1);
+        // В ESP-IDF лучше использовать vTaskDelay вместо sleep()
+        // для чистоты стиля FreeRTOS
+        ESP_LOGI("MAIN", "System is running...");
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 //Инициализация SPI (GPIO 2, 6, 7, 10)
@@ -130,12 +155,12 @@ void init_interrupt_signal() {
 void create_system_tasks(void) {
     // 1. Задача SPI (Связь с STM32)
     // Используем xTaskCreate. На одноядерном C3 ядро всегда 0.
-    xTaskCreate(vTaskSPI, 
-                "SPI_Task", 
-                STACK_SIZE_SPI, 
-                NULL, 
-                PRIORITY_SPI_COMM, 
-                NULL);
+    xTaskCreate(vTaskSPI, // Функция задачи
+                "SPI_Task", // Имя для отладки
+                STACK_SIZE_SPI, // Используем 4096 байт
+                NULL, // Параметры не передаем
+                PRIORITY_SPI_COMM, // Используем приоритет 15
+                NULL); // Хендл не сохраняем
 
     // 2. Задача Modbus RTU
     xTaskCreate(vTaskModbus, 
@@ -158,26 +183,46 @@ void create_system_tasks(void) {
 
 // Пример реализации критической задачи
 void vTaskSPI(void *pvParameters) {
-    for (;;) {
-        // Выполняем быстрый обмен данными
-        // ... логика SPI ...
-
-        // Обязательная блокировка, чтобы дать время другим задачам
-        // Если SPI работает по прерыванию, здесь можно использовать семафор
-        vTaskDelay(pdMS_TO_TICKS(10)); 
+    // 1. Регистрируем ТЕКУЩУЮ задачу в вочдоге
+    esp_task_wdt_add(NULL);
+    while (1) {
+       
+        // Задача засыпает здесь и НЕ потребляет ресурсы процессора.
+        // Она будет ждать вечно (portMAX_DELAY), пока семафор не "дадут".
+        if (xSemaphoreTake(spi_sem, portMAX_DELAY) == pdTRUE) {
+            // Как только мы здесь — значит данные от STM32 ПРИШЛИ!
+            ; //process_spi_data(); // Быстро обрабатываем
+            // Попытка взять мьютекс. Ждем максимум 10 мс (pdMS_TO_TICKS(10))
+            if (xSemaphoreTake(xDataMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+                // 2. Сбрасываем таймер сразу после пробуждения
+                esp_task_wdt_reset();
+                
+                // КРИТИЧЕСКАЯ СЕКЦИЯ: Здесь работаем с DBMain
+                float new_Useti_from_spi = 0;
+                DBMain.f50.Useti = new_Useti_from_spi;
+                
+                // Обязательно "отдаем" мьютекс обратно!
+                xSemaphoreGive(xDataMutex);
+            } else {
+                // Если за 10 мс мьютекс не освободился — это повод для лога ошибки
+                ESP_LOGW("DATA", "Не удалось получить доступ к DBMain (Timeout)");
+            }
+        }
+        //vTaskDelay(pdMS_TO_TICKS(10)); 
     }
 }
 
 // Пример реализации критической задачи
 void vTaskModbus(void *pvParameters) {
+    esp_task_wdt_add(NULL);
     mb_event_group_t event_mask;
-    
+    //const TickType_t xTicksToWait = portMAX_DELAY; // Ждем события вечно, не потребляя CPU
     //init_modbus_slave();
     while (1) {
         // Ожидание события (аналог обработки прерывания в RTOS)
         // Блокируется до тех пор, пока не придет запрос от Master (STM32)
         event_mask = mbc_slave_check_event(MB_EVENT_HOLDING_REG_WR | MB_EVENT_HOLDING_REG_RD);
-
+        esp_task_wdt_reset();
         if (event_mask & MB_EVENT_HOLDING_REG_WR) {
             // Если STM32 что-то записал в ESP32
             ESP_LOGI("MODBUS", "STM32 обновил параметры управления");
@@ -189,12 +234,13 @@ void vTaskModbus(void *pvParameters) {
             // Обновляем наш Heartbeat для следующего цикла
             //slave_data.heartbeat++; 
         }
-        vTaskDelay(pdMS_TO_TICKS(10)); 
+        vTaskDelay(pdMS_TO_TICKS(10)); // Задача ушла спать на 10 мс
     }
 }
 
 // Реализация задачи для сетевых интерфейсов (WiFi + Bluetooth)
 void vTaskNetwork(void *pvParameters) {
+    esp_task_wdt_add(NULL);
     ESP_LOGI("NET", "Задача Network запущена");
 
     /* Здесь в будущем будет инициализация:
@@ -207,10 +253,24 @@ void vTaskNetwork(void *pvParameters) {
     while (1) {
         // Пока здесь просто заглушка, чтобы задача не завершалась
         // и не тратила ресурсы процессора
-        
+        esp_task_wdt_reset();
         ESP_LOGD("NET", "Ожидание сетевых событий...");
         
         // Задержка 5 секунд для тестов
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(5000)); // Вочдог не сработает во время сна!
+    }
+}
+// Обработчик прерывания
+// Добавляем IRAM_ATTR, чтобы код жил в RAM и работал максимально быстро
+void IRAM_ATTR spi_isr_handler(void* arg) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    
+    // Даем семафор, чтобы разбудить задачу
+    xSemaphoreGiveFromISR(spi_sem, &xHigherPriorityTaskWoken);
+    
+    // Если разбуженная задача имеет более высокий приоритет — 
+    // переключаемся на неё мгновенно, не дожидаясь конца тика системы.
+    if (xHigherPriorityTaskWoken) {
+        portYIELD_FROM_ISR();
     }
 }
