@@ -7,6 +7,9 @@ idf_component_register(
     DB_Main.c
     DB_Parameters.c
     Block_FRAM.c
+    Block_SPI.c
+    Block_Modbus.c
+    Block_GPIO.c
 
     INCLUDE_DIRS 
     "include"       # optional, add here public include directories    

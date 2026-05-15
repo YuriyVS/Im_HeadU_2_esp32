@@ -4,35 +4,12 @@
 
 #include "esp_task_wdt.h"
 
-#include "mbcontroller.h"
-
-#include "driver/spi_master.h"
-#include "driver/spi_common.h"
-#include "driver/gpio.h"
-
-#include "driver/uart.h"
-
+#include "Block_GPIO.h"
 #include "DB_Parameters.h"
 #include "DB_Main.h"
 #include "Block_FRAM.h"
-
-#define PIN_NUM_MISO 2
-#define PIN_NUM_MOSI 7
-#define PIN_NUM_CLK  6
-#define PIN_NUM_CS   10
-
-void init_spi_interface();
-
-#define UART_PORT_NUM      UART_NUM_0
-#define UART_BAUD_RATE     115200
-#define UART_TX_PIN        21
-#define UART_RX_PIN        20
-
-void init_uart_communication();
-
-#define GPIO_INT_TO_STM32 3
-
-void init_interrupt_signal();
+#include "Block_SPI.h"
+#include "Block_Modbus.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -49,7 +26,7 @@ void init_interrupt_signal();
 #define STACK_SIZE_MODBUS        4096
 #define STACK_SIZE_NETWORK       8192 // WiFi требует больше стека
 
-// Заглушки функций задач
+
 void vTaskSPI(void *pvParameters);
 void vTaskModbus(void *pvParameters);
 void vTaskNetwork(void *pvParameters);
@@ -73,83 +50,21 @@ void app_main(void)
     DBParameters = DBParametersFactory;
     
     // 3. Инициализация ПЕРИФЕРИИ (но без включения прерываний, если можно)
+    init_int_to_stm32_signal();
     init_spi_interface();
     init_uart_communication();
 
     // 4. ЗАПУСК ЗАДАЧ
     // Теперь задачи созданы и "спят" в ожидании ресурсов или событий
-    create_system_tasks();
+    create_system_tasks();   
 
-    // 5. ВКЛЮЧЕНИЕ ПРЕРЫВАНИЙ
-    // Теперь, если придет прерывание, всё готово к его обработке
-    init_interrupt_signal();
-
-    // 6. Основной цикл app_main (работает на приоритете 1)
+    // 5. Основной цикл app_main (работает на приоритете 1)
     while (true) {
         // В ESP-IDF лучше использовать vTaskDelay вместо sleep()
         // для чистоты стиля FreeRTOS
         ESP_LOGI("MAIN", "System is running...");
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
-}
-//Инициализация SPI (GPIO 2, 6, 7, 10)
-void init_spi_interface() {
-    spi_bus_config_t buscfg = {
-        .miso_io_num = PIN_NUM_MISO,
-        .mosi_io_num = PIN_NUM_MOSI,
-        .sclk_io_num = PIN_NUM_CLK,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = 4000,
-        .flags = SPICOMMON_BUSFLAG_IOMUX_PINS // Принудительно используем быстрый путь
-    };
-
-    // Инициализация шины SPI
-    ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO));
-
-    // Если ESP32 — ведущий (Master), настраиваем параметры устройства
-    spi_device_interface_config_t devcfg = {
-        .clock_speed_hz = 10 * 1000 * 1000, // 10 MHz
-        .mode = 0,                          // SPI Mode 0
-        .spics_io_num = PIN_NUM_CS,         // Hardware CS
-        .queue_size = 7,
-    };
-
-    spi_device_handle_t spi;
-    ESP_ERROR_CHECK(spi_bus_add_device(SPI2_HOST, &devcfg, &spi));
-}
-//Инициализация UART (GPIO 20, 21)
-void init_uart_communication() {
-    uart_config_t uart_config = {
-        .baud_rate = UART_BAUD_RATE,
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_DEFAULT,
-    };
-
-    // Установка параметров и драйвера
-    ESP_ERROR_CHECK(uart_driver_install(UART_PORT_NUM, 1024 * 2, 0, 0, NULL, 0));
-    ESP_ERROR_CHECK(uart_param_config(UART_PORT_NUM, &uart_config));
-    
-    // Назначение пинов (Native для UART0)
-    ESP_ERROR_CHECK(uart_set_pin(UART_PORT_NUM, UART_TX_PIN, UART_RX_PIN, 
-                                 UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
-}
-//Настройка прерывания для STM32 (GPIO 3)
-void init_interrupt_signal() {
-    gpio_config_t io_conf = {
-        .intr_type = GPIO_INTR_DISABLE,    // Это выход
-        .mode = GPIO_MODE_OUTPUT,
-        .pin_bit_mask = (1ULL << GPIO_INT_TO_STM32),
-        .pull_down_en = 0,
-        .pull_up_en = 0
-    };
-    gpio_config(&io_conf);
-    
-    // По умолчанию держим в логическом нуле
-    gpio_set_level(GPIO_INT_TO_STM32, 0);
 }
 
 void create_system_tasks(void) {
