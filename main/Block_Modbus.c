@@ -104,6 +104,8 @@ void init_modbus_master() {
 
     // 4. Старт мастера
     ESP_ERROR_CHECK(mbc_master_start());
+  
+
 }
 
 const mb_parameter_descriptor_t device_parameters[] = {

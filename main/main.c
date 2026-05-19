@@ -10,14 +10,16 @@
 #include "Block_FRAM.h"
 #include "Block_SPI.h"
 #include "Block_Modbus.h"
+#include "Block_Network.h"
+#include "web_server.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
 
 // Определения приоритетов
-#define PRIORITY_SPI_COMM        15  // Критическая связь с STM32
-#define PRIORITY_MODBUS_UART     10  // Обработка протокола Modbus
+#define PRIORITY_SPI_COMM        10  // Критическая связь с STM32
+#define PRIORITY_MODBUS_UART     15  // Обработка протокола Modbus
 #define PRIORITY_NETWORK_APP      7  // Логика WiFi/Bluetooth
 #define PRIORITY_LOG_TASK         1  // Фоновое логирование
 
@@ -199,27 +201,27 @@ void vTaskModbus(void *pvParameters) {
 }
 
 // Реализация задачи для сетевых интерфейсов (WiFi + Bluetooth)
-void vTaskNetwork(void *pvParameters) {
-    esp_task_wdt_add(NULL);
-    ESP_LOGI("NET", "Задача Network запущена");
+// void vTaskNetwork(void *pvParameters) {
+//     esp_task_wdt_add(NULL);
+//     ESP_LOGI("NET", "Задача Network запущена");
 
-    /* Здесь в будущем будет инициализация:
-       1. nvs_flash_init()
-       2. esp_netif_init()
-       3. esp_event_loop_create_default()
-       4. Инициализация WiFi или BLE
-    */
+//     /* Здесь в будущем будет инициализация:
+//        1. nvs_flash_init()
+//        2. esp_netif_init()
+//        3. esp_event_loop_create_default()
+//        4. Инициализация WiFi или BLE
+//     */
 
-    while (1) {
-        // Пока здесь просто заглушка, чтобы задача не завершалась
-        // и не тратила ресурсы процессора
-        esp_task_wdt_reset();
-        ESP_LOGI("NET", "Ожидание сетевых событий...");
+//     while (1) {
+//         // Пока здесь просто заглушка, чтобы задача не завершалась
+//         // и не тратила ресурсы процессора
+//         esp_task_wdt_reset();
+//         ESP_LOGI("NET", "Ожидание сетевых событий...");
         
-        // Задержка 1 секунд для тестов
-        vTaskDelay(pdMS_TO_TICKS(3000)); // Вочдог не сработает во время сна!
-    }
-}
+//         // Задержка 1 секунд для тестов
+//         vTaskDelay(pdMS_TO_TICKS(3000)); // Вочдог не сработает во время сна!
+//     }
+// }
 // Обработчик прерывания
 // Добавляем IRAM_ATTR, чтобы код жил в RAM и работал максимально быстро
 void IRAM_ATTR spi_isr_handler(void* arg) {
@@ -232,5 +234,90 @@ void IRAM_ATTR spi_isr_handler(void* arg) {
     // переключаемся на неё мгновенно, не дожидаясь конца тика системы.
     if (xHigherPriorityTaskWoken) {
         portYIELD_FROM_ISR();
+    }
+}
+
+// Обработчик событий: пишет в лог, когда кто-то подключается или отключается от ESP32
+static void wifi_event_handler(void* arg, esp_event_base_t event_base,
+                               int32_t event_id, void* event_data) {
+    if (event_id == WIFI_EVENT_AP_STACONNECTED) {
+        wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
+        ESP_LOGI("NET", "Устройство подключилось, MAC: " MACSTR ", AID=%d",
+                 MAC2STR(event->mac), event->aid);
+    } else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) {
+        wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
+        ESP_LOGI("NET", "Устройство отключилось, MAC: " MACSTR ", AID=%d",
+                 MAC2STR(event->mac), event->aid);
+    }
+}
+
+void vTaskNetwork(void *pvParameters) {
+    ESP_LOGI("NET", "Задача Network запущена. Старт инициализации Wi-Fi SoftAP...");
+
+    // 1. Инициализация NVS флеш-памяти (ОБЯЗАТЕЛЬНО для Wi-Fi, там хранятся калибровки радио)
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    // 2. Инициализация базового сетевого интерфейса (LwIP)
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    esp_netif_create_default_wifi_ap();
+
+    // 3. Конфигурация Wi-Fi стека
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    // 4. Регистрация обработчика событий (чтобы видеть подключения в логах)
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
+                                                        ESP_EVENT_ANY_ID,
+                                                        &wifi_event_handler,
+                                                        NULL,
+                                                        NULL));
+
+    // 5. Настройка параметров нашей точки доступа
+    wifi_config_t wifi_config = {
+        .ap = {
+            .ssid = WIFI_AP_SSID,
+            .ssid_len = strlen(WIFI_AP_SSID),
+            .channel = WIFI_AP_CHANNEL,
+            .password = WIFI_AP_PASS,
+            .max_connection = MAX_STA_CONN,
+            .authmode = WIFI_AUTH_WPA2_PSK, // Защита WPA2
+            .pmf_cfg = {
+                .required = false,
+            },
+        },
+    };
+    
+    // Если пароль не задан, делаем сеть открытой
+    if (strlen(WIFI_AP_PASS) == 0) {
+        wifi_config.ap.authmode = WIFI_AUTH_OPEN; 
+    }
+
+    // 6. Установка режима AP и запуск
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    ESP_LOGI("NET", "Точка доступа успешно поднята! SSID: %s", WIFI_AP_SSID);
+
+    start_webserver();
+
+    // ПОДКЛЮЧАЕМ ВОЧДОГ ЗДЕСЬ: инициализация радио завершена, теперь можно следить за циклом
+    esp_task_wdt_add(NULL);
+
+    while (1) {
+        // Сброс вочдога
+        esp_task_wdt_reset();
+        
+        // Используем LOGD (Debug), чтобы не спамить в консоль каждую секунду
+        ESP_LOGD("NET", "Ожидание сетевых событий...");
+        
+        // Задержка 3 секунды
+        vTaskDelay(pdMS_TO_TICKS(3000)); 
     }
 }

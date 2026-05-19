@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "app-template",
-    "project_version":    "5fb42aa-dirty",
+    "project_version":    "ceabff0-dirty",
     "project_path":       "D:/Users/sukharyev_uv/workspace/Im_HeadU_2",
     "idf_path":           "D:/esp/v5.5.4/esp-idf",
     "build_dir":          "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build",
@@ -1250,12 +1250,12 @@
             "dir": "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main",
             "type": "LIBRARY",
             "lib": "__idf_main",
-            "reqs": [],
+            "reqs": [ "esp_http_server", "esp_wifi", "nvs_flash", "esp_hw_support", "esp_mm", "efuse" ],
             "priv_reqs": [ "espressif__esp-modbus" ],
             "managed_reqs": [],
             "managed_priv_reqs": [ "espressif__esp-modbus" ],
             "file": "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/main/libmain.a",
-            "sources": [ "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/main.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/DB_Main.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/DB_Parameters.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_FRAM.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_SPI.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_Modbus.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_GPIO.c" ],
+            "sources": [ "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/main.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/DB_Main.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/DB_Parameters.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_FRAM.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_SPI.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_Modbus.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_GPIO.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_Network.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/web_server.c" ],
             "include_dirs": [ "include" ]
         },
         "mbedtls": {
@@ -2934,7 +2934,7 @@
             "prefix": "idf",
             "dir": "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main",
             "lib": "__idf_main",
-            "reqs": [],
+            "reqs": [ "esp_http_server", "esp_wifi", "nvs_flash", "esp_hw_support", "esp_mm", "efuse" ],
             "priv_reqs": [ "espressif__esp-modbus" ],
             "managed_reqs": [],
             "managed_priv_reqs": [ "espressif__esp-modbus" ],
