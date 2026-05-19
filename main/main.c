@@ -180,7 +180,7 @@ void vTaskModbus(void *pvParameters) {
         //     }
         // }
 
-        //read_DB_Main_block_number(0);
+        read_DB_Main_block_number(0);
         // read_DB_Main_single(GET_MB_ADDR(DBMain.f50.GenFreq));
         // read_DB_Main_single(GET_MB_ADDR(DBMain.b32));
         // read_DB_Main_start_size(GET_MB_ADDR(DBMain.f50.GenFreq), 10);
@@ -190,6 +190,8 @@ void vTaskModbus(void *pvParameters) {
             // Считываем текущее состояние, инвертируем знаком '!' и записываем обратно
             gpio_set_level(BLINK_GPIO, !gpio_get_level(BLINK_GPIO));
             count_takt = 0;
+            ESP_LOGI("MODBUS", "Напряжение сети: %.2f В", DBMain.f50.UsetiV);
+            ESP_LOGI("MODBUS", "Iakb: %.2f A", DBMain.f50.IakbA);
         }
         
         vTaskDelay(pdMS_TO_TICKS(100)); 

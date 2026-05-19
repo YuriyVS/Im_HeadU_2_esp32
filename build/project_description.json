@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "app-template",
-    "project_version":    "b49b372-dirty",
+    "project_version":    "5fb42aa-dirty",
     "project_path":       "D:/Users/sukharyev_uv/workspace/Im_HeadU_2",
     "idf_path":           "D:/esp/v5.5.4/esp-idf",
     "build_dir":          "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build",
