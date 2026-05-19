@@ -11,6 +11,7 @@
 #define PIN_NUM_CLK  6
 #define PIN_NUM_CS   10
 
+extern spi_device_handle_t stm32_spi_handle;
 extern void init_spi_interface();
 
 #endif

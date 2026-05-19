@@ -13,8 +13,8 @@
 // #define UART_RX_PIN        20
 
 #define UART_PORT_NUM      UART_NUM_1  // Используем второй UART
-#define UART_TX_PIN        4           // Свободный GPIO
-#define UART_RX_PIN        5           // Свободный GPIO
+#define UART_TX_PIN        4           // Подключается к RX платы STM32
+#define UART_RX_PIN        5           // Подключается к TX платы STM32
 #define SLAVE_ADDR         1
 // Макрос для получения Modbus-адреса любого поля структуры DBMain
 #define GET_MB_ADDR(member) (uint16_t)(1000 + ((uint8_t*)&(member) - (uint8_t*)&DBMain) / 2)

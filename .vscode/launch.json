@@ -8,3 +8,15 @@
     }
   ]
 }
+
+// {
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "ESP-IDF Debug",
+//             "type": "espidf",
+//             "request": "launch",
+//             "openOCDConfigs": ["board/esp32c3-builtin.cfg"]
+//         }
+//     ]
+// }

@@ -39,6 +39,9 @@ SemaphoreHandle_t xDataMutex = NULL;
 
 SemaphoreHandle_t spi_sem = NULL;
 
+int16_t count_takt = 0;
+#define COUNT_LED_MAX 5
+
 void app_main(void)
 {
     // 1. Сначала системные объекты синхронизации (семафоры, очереди, мьютексы)
@@ -51,8 +54,9 @@ void app_main(void)
     
     // 3. Инициализация ПЕРИФЕРИИ (но без включения прерываний, если можно)
     init_int_to_stm32_signal();
-    init_spi_interface();
-    init_uart_communication();
+    init_led();
+    //init_spi_interface();
+    init_modbus_master();
 
     // 4. ЗАПУСК ЗАДАЧ
     // Теперь задачи созданы и "спят" в ожидании ресурсов или событий
@@ -99,31 +103,31 @@ void create_system_tasks(void) {
 // Пример реализации критической задачи
 void vTaskSPI(void *pvParameters) {
     // 1. Регистрируем ТЕКУЩУЮ задачу в вочдоге
-    esp_task_wdt_add(NULL);
+    //esp_task_wdt_add(NULL);
     while (1) {
        
         // Задача засыпает здесь и НЕ потребляет ресурсы процессора.
         // Она будет ждать вечно (portMAX_DELAY), пока семафор не "дадут".
-        if (xSemaphoreTake(spi_sem, portMAX_DELAY) == pdTRUE) {
-            // Как только мы здесь — значит данные от STM32 ПРИШЛИ!
-            ; //process_spi_data(); // Быстро обрабатываем
-            // Попытка взять мьютекс. Ждем максимум 10 мс (pdMS_TO_TICKS(10))
-            if (xSemaphoreTake(xDataMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-                // 2. Сбрасываем таймер сразу после пробуждения
-                esp_task_wdt_reset();
+        // if (xSemaphoreTake(spi_sem, portMAX_DELAY) == pdTRUE) {
+        //     // Как только мы здесь — значит данные от STM32 ПРИШЛИ!
+        //     ; //process_spi_data(); // Быстро обрабатываем
+        //     // Попытка взять мьютекс. Ждем максимум 10 мс (pdMS_TO_TICKS(10))
+        //     if (xSemaphoreTake(xDataMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        //         // 2. Сбрасываем таймер сразу после пробуждения
+        //         esp_task_wdt_reset();
                 
-                // КРИТИЧЕСКАЯ СЕКЦИЯ: Здесь работаем с DBMain
-                float new_Useti_from_spi = 0;
-                DBMain.f50.Useti = new_Useti_from_spi;
+        //         // КРИТИЧЕСКАЯ СЕКЦИЯ: Здесь работаем с DBMain
+        //         float new_Useti_from_spi = 0;
+        //         DBMain.f50.Useti = new_Useti_from_spi;
                 
-                // Обязательно "отдаем" мьютекс обратно!
-                xSemaphoreGive(xDataMutex);
-            } else {
-                // Если за 10 мс мьютекс не освободился — это повод для лога ошибки
-                ESP_LOGW("DATA", "Не удалось получить доступ к DBMain (Timeout)");
-            }
-        }
-        //vTaskDelay(pdMS_TO_TICKS(10)); 
+        //         // Обязательно "отдаем" мьютекс обратно!
+        //         xSemaphoreGive(xDataMutex);
+        //     } else {
+        //         // Если за 10 мс мьютекс не освободился — это повод для лога ошибки
+        //         ESP_LOGW("DATA", "Не удалось получить доступ к DBMain (Timeout)");
+        //     }
+        // }
+        vTaskDelay(pdMS_TO_TICKS(1000)); 
     }
 }
 
@@ -154,33 +158,40 @@ void vTaskSPI(void *pvParameters) {
 // }
 
 void vTaskModbus(void *pvParameters) {
-    float voltage_value = 0;
-    uint8_t type; // Добавляем переменную для типа, которую требует функция
-    const mb_parameter_descriptor_t* param_descr = NULL; // Теперь будем использовать
+    //float voltage_value = 0;
+    //uint8_t type; // Добавляем переменную для типа, которую требует функция
+    //const mb_parameter_descriptor_t* param_descr = NULL; // Теперь будем использовать
         
     while (1) {
         // Запрашиваем параметр. Переменная type заполнится автоматически 
         // значением из таблицы дескрипторов (например, PARAM_TYPE_FLOAT)
-        esp_err_t err = mbc_master_get_parameter(PARAM_VOLTAGE_ID, "Voltage", (uint8_t*)&voltage_value, &type);
+        // esp_err_t err = mbc_master_get_parameter(PARAM_VOLTAGE_ID, "Voltage", (uint8_t*)&voltage_value, &type);
         
-        if (err == ESP_OK) {
-            DBMain.f50.Useti = voltage_value;
-        } else {
-            // Если произошла ошибка, получаем информацию о параметре из таблицы по его CID
-            if (mbc_master_get_cid_info(PARAM_VOLTAGE_ID, &param_descr) == ESP_OK) {
-                ESP_LOGE("MODBUS", "Ошибка параметра [%s] (Slave ID: %d, Addr: 0x%04X): %s", 
-                         param_descr->param_key, 
-                         param_descr->mb_slave_addr, 
-                         param_descr->mb_reg_start,
-                         esp_err_to_name(err));
-            }
+        // if (err == ESP_OK) {
+        //     DBMain.f50.Useti = voltage_value;
+        // } else {
+        //     // Если произошла ошибка, получаем информацию о параметре из таблицы по его CID
+        //     if (mbc_master_get_cid_info(PARAM_VOLTAGE_ID, &param_descr) == ESP_OK) {
+        //         ESP_LOGE("MODBUS", "Ошибка параметра [%s] (Slave ID: %d, Addr: 0x%04X): %s", 
+        //                  param_descr->param_key, 
+        //                  param_descr->mb_slave_addr, 
+        //                  param_descr->mb_reg_start,
+        //                  esp_err_to_name(err));
+        //     }
+        // }
+
+        //read_DB_Main_block_number(0);
+        // read_DB_Main_single(GET_MB_ADDR(DBMain.f50.GenFreq));
+        // read_DB_Main_single(GET_MB_ADDR(DBMain.b32));
+        // read_DB_Main_start_size(GET_MB_ADDR(DBMain.f50.GenFreq), 10);
+
+        count_takt ++;        
+        if(count_takt > COUNT_LED_MAX) {
+            // Считываем текущее состояние, инвертируем знаком '!' и записываем обратно
+            gpio_set_level(BLINK_GPIO, !gpio_get_level(BLINK_GPIO));
+            count_takt = 0;
         }
-
-        read_DB_Main_block_number(0);
-        read_DB_Main_single(GET_MB_ADDR(DBMain.f50.GenFreq));
-        read_DB_Main_single(GET_MB_ADDR(DBMain.b32));
-        read_DB_Main_start_size(GET_MB_ADDR(DBMain.f50.GenFreq), 10);
-
+        
         vTaskDelay(pdMS_TO_TICKS(100)); 
     }
 }
@@ -201,10 +212,10 @@ void vTaskNetwork(void *pvParameters) {
         // Пока здесь просто заглушка, чтобы задача не завершалась
         // и не тратила ресурсы процессора
         esp_task_wdt_reset();
-        ESP_LOGD("NET", "Ожидание сетевых событий...");
+        ESP_LOGI("NET", "Ожидание сетевых событий...");
         
-        // Задержка 5 секунд для тестов
-        vTaskDelay(pdMS_TO_TICKS(5000)); // Вочдог не сработает во время сна!
+        // Задержка 1 секунд для тестов
+        vTaskDelay(pdMS_TO_TICKS(3000)); // Вочдог не сработает во время сна!
     }
 }
 // Обработчик прерывания

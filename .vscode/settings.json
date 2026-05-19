@@ -1,3 +1,16 @@
+// {
+//   "idf.currentSetup": "D:\\esp\\v5.5.4\\esp-idf",
+//   "idf.customExtraVars": {},
+//   "clangd.path": "C:\\Espressif\\tools\\esp-clang\\esp-20.1.1_20250829\\esp-clang\\bin\\clangd.exe",
+//   "clangd.arguments": [
+//     "--background-index",
+//     "--query-driver=**",
+//     "--compile-commands-dir=d:\\Users\\sukharyev_uv\\workspace\\Im_HeadU_2\\build"
+//   ],
+//   "idf.portWin": "COM3",
+//   "idf.flashType": "UART"
+// }
+
 {
   "idf.currentSetup": "D:\\esp\\v5.5.4\\esp-idf",
   "idf.customExtraVars": {},
@@ -7,5 +20,10 @@
     "--query-driver=**",
     "--compile-commands-dir=d:\\Users\\sukharyev_uv\\workspace\\Im_HeadU_2\\build"
   ],
-  "idf.portWin": "COM3"
+  "idf.portWin": "COM6",
+  "idf.flashType": "UART",
+  "idf.openOcdConfigs": [
+    "board/esp32c3-builtin.cfg"
+  ],
+  "idf.adapterTargetName": "esp32c3"
 }

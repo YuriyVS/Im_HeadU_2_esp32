@@ -1,5 +1,6 @@
 #include "Block_SPI.h"
 
+spi_device_handle_t stm32_spi_handle= NULL;
 //Инициализация SPI (GPIO 2, 6, 7, 10)
 void init_spi_interface() {
     spi_bus_config_t buscfg = {
@@ -9,7 +10,7 @@ void init_spi_interface() {
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
         .max_transfer_sz = 4000,
-        .flags = SPICOMMON_BUSFLAG_IOMUX_PINS // Принудительно используем быстрый путь
+        .flags = SPICOMMON_BUSFLAG_IOMUX_PINS // Принудительно используем быстрый путь // Если пины не родные (не 6, 2, 7), замените на 0
     };
 
     // Инициализация шины SPI
@@ -23,6 +24,6 @@ void init_spi_interface() {
         .queue_size = 7,
     };
 
-    spi_device_handle_t spi;
-    ESP_ERROR_CHECK(spi_bus_add_device(SPI2_HOST, &devcfg, &spi));
+    //spi_device_handle_t spi;
+    ESP_ERROR_CHECK(spi_bus_add_device(SPI2_HOST, &devcfg, &stm32_spi_handle));
 }

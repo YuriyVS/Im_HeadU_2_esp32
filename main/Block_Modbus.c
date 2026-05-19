@@ -91,7 +91,7 @@ void init_modbus_master() {
     // 2. Настройка параметров связи
     mb_communication_info_t comm_info = {
         .mode = MB_MODE_RTU,
-        .port = UART_NUM_1,
+        .port = UART_PORT_NUM,
         .baudrate = 115200,
         .parity = MB_PARITY_NONE
     };
