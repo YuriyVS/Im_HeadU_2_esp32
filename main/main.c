@@ -19,7 +19,7 @@
 
 // Определения приоритетов
 #define PRIORITY_SPI_COMM        10  // Критическая связь с STM32
-#define PRIORITY_MODBUS_UART     15  // Обработка протокола Modbus
+#define PRIORITY_MODBUS_UART     24  // Обработка протокола Modbus
 #define PRIORITY_NETWORK_APP      7  // Логика WiFi/Bluetooth
 #define PRIORITY_LOG_TASK         1  // Фоновое логирование
 
@@ -42,7 +42,7 @@ SemaphoreHandle_t xDataMutex = NULL;
 SemaphoreHandle_t spi_sem = NULL;
 
 int16_t count_takt = 0;
-#define COUNT_LED_MAX 5
+#define COUNT_LED_MAX 4
 
 void app_main(void)
 {
@@ -182,13 +182,15 @@ void vTaskModbus(void *pvParameters) {
         //     }
         // }
 
-        read_DB_Main_block_number(0);
+        read_DB_Main_block_number(count_takt);
         // read_DB_Main_single(GET_MB_ADDR(DBMain.f50.GenFreq));
         // read_DB_Main_single(GET_MB_ADDR(DBMain.b32));
         // read_DB_Main_start_size(GET_MB_ADDR(DBMain.f50.GenFreq), 10);
+        //read_DB_Main_single(GET_MB_ADDR(DBMain.f50.UsetiV));
+        //read_DB_Main_single(GET_MB_ADDR(DBMain.f50.IakbA));
 
         count_takt ++;        
-        if(count_takt > COUNT_LED_MAX) {
+        if(count_takt >= COUNT_LED_MAX) {
             // Считываем текущее состояние, инвертируем знаком '!' и записываем обратно
             gpio_set_level(BLINK_GPIO, !gpio_get_level(BLINK_GPIO));
             count_takt = 0;
@@ -303,7 +305,12 @@ void vTaskNetwork(void *pvParameters) {
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI("NET", "Точка доступа успешно поднята! SSID: %s", WIFI_AP_SSID);
+    //ESP_LOGI("NET", "Точка доступа успешно поднята! SSID: %s", WIFI_AP_SSID);
+    // Вставляем настройку IP "на лету"
+    configure_ap_ip(); 
+
+    // Логируем результат
+    ESP_LOGI("NET", "Точка доступа поднята с кастомным IP и SSID: %s", WIFI_AP_SSID);
 
     start_webserver();
 
@@ -315,9 +322,9 @@ void vTaskNetwork(void *pvParameters) {
         esp_task_wdt_reset();
         
         // Используем LOGD (Debug), чтобы не спамить в консоль каждую секунду
-        ESP_LOGD("NET", "Ожидание сетевых событий...");
+        //ESP_LOGD("NET", "Ожидание сетевых событий...");
         
-        // Задержка 3 секунды
-        vTaskDelay(pdMS_TO_TICKS(3000)); 
+        // Задержка 
+        vTaskDelay(pdMS_TO_TICKS(1000)); 
     }
 }

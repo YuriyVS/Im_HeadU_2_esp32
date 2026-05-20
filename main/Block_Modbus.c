@@ -93,7 +93,7 @@ void init_modbus_master() {
         .mode = MB_MODE_RTU,
         .port = UART_PORT_NUM,
         .baudrate = 115200,
-        .parity = MB_PARITY_NONE
+        .parity = MB_PARITY_NONE        
     };
 
     ESP_ERROR_CHECK(mbc_master_setup((void*)&comm_info));
@@ -104,6 +104,11 @@ void init_modbus_master() {
 
     // 4. Старт мастера
     ESP_ERROR_CHECK(mbc_master_start());
+
+    // 5. Аппаратный тюнинг UART против коллизий Wi-Fi
+    // Увеличиваем таймаут IDLE до 20 символов. Это заставит аппаратный UART 
+    // ESP32-C3 быть более "терпимым" к микропаузам, которые создаёт радиомодуль.
+    ESP_ERROR_CHECK(uart_set_rx_timeout(UART_PORT_NUM, 20));
   
 
 }
@@ -185,28 +190,28 @@ void read_DB_Main_block_number(uint16_t num) {
             elements_count = 50;
             break;
 
-        case 2: // f100
+        case 1: // f100
             request.reg_start = 1100;
             request.reg_size = 100;
             dest_ptr = (void*)(uintptr_t)&DBMain.f100.as_array;
             elements_count = 50;
             break;
 
-        case 3: // i50
+        case 2: // i50
             request.reg_start = 1200;
             request.reg_size = 100;
             dest_ptr = (void*)(uintptr_t)&DBMain.i50.as_array;
             elements_count = 50;
             break;
 
-        case 4: // u50
+        case 3: // u50
             request.reg_start = 1300;
             request.reg_size = 100;
             dest_ptr = (void*)(uintptr_t)&DBMain.u50.as_array;
             elements_count = 50;
             break;
 
-        case 5: // b32, b64, b96 (читаем все 3 блока сразу)
+        case 4: // b32, b64, b96 (читаем все 3 блока сразу)
             request.reg_start = 1400;
             request.reg_size = 6; // 3 блока по 32 бита = 6 регистров
             dest_ptr = (void*)(uintptr_t)&DBMain.b32; // Начало цепочки bool-блоков

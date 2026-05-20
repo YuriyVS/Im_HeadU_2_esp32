@@ -6,6 +6,10 @@
 #include "esp_mac.h"
 #include "nvs_flash.h"
 #include "esp_task_wdt.h"
+#include "esp_netif.h"
+#include "esp_log.h"
+
+extern void configure_ap_ip(void);
 
 // Настройки вашей точки доступа
 #define WIFI_AP_SSID      "IM_HEADU_2_Setup" // Имя сети
