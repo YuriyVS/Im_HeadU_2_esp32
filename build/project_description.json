@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "app-template",
-    "project_version":    "a3fc1b7-dirty",
+    "project_version":    "eef7206-dirty",
     "project_path":       "D:/Users/sukharyev_uv/workspace/Im_HeadU_2",
     "idf_path":           "D:/esp/v5.5.4/esp-idf",
     "build_dir":          "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build",
@@ -1255,7 +1255,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [ "espressif__esp-modbus" ],
             "file": "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/esp-idf/main/libmain.a",
-            "sources": [ "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/main.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/DB_Main.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/DB_Parameters.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_FRAM.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_SPI.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_Modbus.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_GPIO.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_Network.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/web_server.c" ],
+            "sources": [ "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/main.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/DB_Main.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/DB_Parameters.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_FRAM.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_SPI.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_Modbus.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_GPIO.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/Block_Network.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/main/web_server.c", "D:/Users/sukharyev_uv/workspace/Im_HeadU_2/build/index.html.S" ],
             "include_dirs": [ "include" ]
         },
         "mbedtls": {

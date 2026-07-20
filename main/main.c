@@ -42,7 +42,7 @@ SemaphoreHandle_t xDataMutex = NULL;
 SemaphoreHandle_t spi_sem = NULL;
 
 int16_t count_takt = 0;
-#define COUNT_LED_MAX 4
+#define COUNT_LED_MAX 10
 
 void app_main(void)
 {
@@ -196,6 +196,8 @@ void vTaskModbus(void *pvParameters) {
             count_takt = 0;
             ESP_LOGI("MODBUS", "Напряжение сети: %.2f В", DBMain.f50.UsetiV);
             ESP_LOGI("MODBUS", "Iakb: %.2f A", DBMain.f50.IakbA);
+            ESP_LOGI("MODBUS", "b32 raw: 0x%08X", (unsigned int)DBMain.b32.all);
+            ESP_LOGI("MODBUS", "b64 raw: 0x%08X", (unsigned int)DBMain.b64.all);
         }
         
         vTaskDelay(pdMS_TO_TICKS(100)); 
@@ -304,6 +306,9 @@ void vTaskNetwork(void *pvParameters) {
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
+
+    // ДОБАВИТЬ СТРОКУ ТУТ: Принудительно ставим ширину канала 20 МГц для Точки Доступа
+    ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_AP, WIFI_BW_HT20));
 
     //ESP_LOGI("NET", "Точка доступа успешно поднята! SSID: %s", WIFI_AP_SSID);
     // Вставляем настройку IP "на лету"

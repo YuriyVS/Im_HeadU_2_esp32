@@ -26,4 +26,5 @@ idf_component_register(
     efuse
 
     PRIV_REQUIRES       # optional, list the private requirements
+    EMBED_TXTFILES "index.html"
 )

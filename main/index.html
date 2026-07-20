@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Панель управления Системой</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #181e23; 
+            color: #ecf0f1; 
+            margin: 0; 
+            padding: 15px; 
+        }
+        h2 { text-align: center; color: #3498db; margin-bottom: 15px; }
+
+        /* Переключатель Базы Данных */
+        .db-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .db-btn {
+            background: #11161a;
+            border: 2px solid #3498db;
+            color: #3498db;
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .db-btn.active {
+            background: #3498db;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(52, 152, 219, 0.5);
+        }
+
+        /* Вкладки типов данных */
+        .tabs { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 15px; }
+        .tab-btn { 
+            background: #2c3e50; border: none; color: #bdc3c7; padding: 8px 14px; 
+            cursor: pointer; border-radius: 6px; font-weight: bold; transition: 0.2s; 
+        }
+        .tab-btn:hover { background: #34495e; color: #fff; }
+        .tab-btn.active { background: #2980b9; color: #fff; }
+
+        /* Сетка карточек */
+        .tab-content { display: none; }
+        .tab-content.active { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+
+        .card { 
+            background: #242c35; padding: 10px; border-radius: 8px; 
+            border-left: 4px solid #3498db; box-shadow: 0 2px 6px rgba(0,0,0,0.3); 
+        }
+        .card-title { font-size: 0.75em; color: #8899a6; text-transform: uppercase; word-break: break-all; }
+        .card-value { font-size: 1.2em; font-weight: bold; color: #f1c40f; margin-top: 4px; }
+
+        /* Светодиоды */
+        .bool-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; }
+        .led-card { display: flex; align-items: center; background: #242c35; padding: 8px 12px; border-radius: 8px; gap: 10px; }
+        .led { width: 14px; height: 14px; border-radius: 50%; background: #4a5568; flex-shrink: 0; }
+        .led.on { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+        .led-name { font-size: 0.85em; color: #d2d6dc; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+    <h2>Система Мониторинга и Настроек</h2>
+
+    <!-- Выбор базы данных: DBMain vs DBParameters -->
+    <div class="db-selector">
+        <button class="db-btn active" onclick="switchDB('main', this)">Оперативные данные (DBMain)</button>
+        <button class="db-btn" onclick="switchDB('params', this)">Уставки / Настройки (DBParameters)</button>
+    </div>
+
+    <!-- Вкладки по типам -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('tab1', this)">Float 1-50</button>
+        <button class="tab-btn" onclick="openTab('tab2', this)">Float 51-100</button>
+        <button class="tab-btn" onclick="openTab('tab3', this)">Int32 1-50</button>
+        <button class="tab-btn" onclick="openTab('tab4', this)">UInt32 1-50</button>
+        <button class="tab-btn" onclick="openTab('tab5', this)">Bool 1-32</button>
+        <button class="tab-btn" onclick="openTab('tab6', this)">Bool 33-64</button>
+        <button class="tab-btn" onclick="openTab('tab7', this)">Bool 65-96</button>
+    </div>
+
+    <!-- Контейнеры -->
+    <div id="tab1" class="tab-content active"></div>
+    <div id="tab2" class="tab-content"></div>
+    <div id="tab3" class="tab-content"></div>
+    <div id="tab4" class="tab-content"></div>
+    <div id="tab5" class="tab-content bool-grid"></div>
+    <div id="tab6" class="tab-content bool-grid"></div>
+    <div id="tab7" class="tab-content bool-grid"></div>
+
+    <script>
+        let currentDB = 'main'; // 'main' или 'params'
+
+        // Словари имен для DBMain
+        const dbMainNames = {
+            f50: ["UsetiV", "Useti", "IakbA", "Iakb", "Rezerv1U", "Rezerv1", "Rezerv2U", "Rezerv2", "Rezerv3U", "Rezerv3", "Rezerv4U", "Rezerv4", "GenFreq", "GenFreqHz", "Idпорог", "Itint", "FreqGenABHz", "FreqGenBCHz", "FreqGenCAHz", "SpeedCar", "ControlPhazGenGist", "Alfa_ref", "Alfa", "Idref2", "RTout2", "Idelta2", "IntChRT2", "ZiTout1", "Idref1", "RTout1", "Idelta1", "IntChRT1", "RNref", "RNout", "Ndelta", "IntChRN", "ZiNout", "ZiNTiStop", "TimerA", "TimerB", "TimerC", "Ud_ref", "IakbRef", "IgenRef", "Iseti", "RefIovg", "fval47", "fval48", "fval49", "fval50"],
+            f100: Array.from({length:50}, (_, i) => `fval${i+51}`),
+            i50: Array.from({length:50}, (_, i) => i === 0 ? "phaseSum" : `ival${i+1}`),
+            u50: Array.from({length:50}, (_, i) => `uval${i+1}`),
+            b32: ["Kn380V_Vtkl_DIxor", "Kn380V_Otkl_DIxor", "KrishkaVidkrita_DIxor", "DistanVidkl380V_DIxor", "QFVvod_DIxor", "QFVvodAvarStan_DIxor", "Rezerv1_DIxor", "Rezerv2_DIxor", "Rezerv3_DIxor", "Rezerv4_DIxor", "Rezerv5_DIxor", "Rezerv6_DIxor", "Rezerv7_DIxor", "i380V_Podano_DOxor", "i380V_Znyato_DOxor", "Merezha380vFault_DOxor", "GeneratorFault_DOxor", "i380V_Vvod_DOxor", "BlockDoor_DOxor", "Rezerv1_DOxor", "Rezerv2_DOxor", "Rezerv3_DOxor", "Rezerv4_DOxor", "Rezerv5_DOxor", "Rezerv6_DOxor", "Rezerv7_DOxor", "Rezerv8_DOxor", "Reset", "DistanVidkl380V", "QFVvodAvarStan", "i380V_Vvod", "FazaA1Loss"],
+            b64: ["FazaB1Loss", "FazaC1Loss", "ABC380ok", "FazaLossInWork", "Iakb_TimemaxMem", "IakbmaxMem", "ReadyVkl", "ReadyRun", "ReadyRef", "Run", "Fault", "Gotov", "Alarm", "RectVkluchen", "BlockRect", "GenAloss", "GenBloss", "GenCloss", "GenAsboi", "GenBsboi", "GenCsboi", "FaultGenerator", "BlockCarDoors", "BlockSifu", "TM", "EnableSifu", "BlokDeleyTimeSifu", "ShuntReg", "ShuntRT2", "ShuntZiT1", "ShuntRT1", "ShuntZiT2"],
+            b96: ["ShuntRN", "ShuntZiN", "UdmaxMem", "Sled", "EStopMem", "EnableSifuOld", "PulseStage1", "PulseStage2", "PulseStage3", "PulseStage4", "PulseStage5", "PulseStage6", "Save_to_Flash", "Read_from_Flash", "bit79", "bit80", "bit81", "bit82", "bit83", "bit84", "bit85", "bit86", "bit87", "bit88", "bit89", "bit90", "bit91", "bit92", "bit93", "bit94", "bit95", "bit96"]
+        };
+
+        // Словари имен для DBParameters
+        const dbParamsNames = {
+            f50: ["P1_1", "P1_2", "P2_1", "P4_5", "P4_6", "P5_2", "P5_3", "P5_4", "P5_5", "P5_6", "P5_7", "P6_2", "P6_3", "P6_4", "P6_5", "P6_6", "P6_7", "P20_1", "P20_2", "P20_3", "P20_4", "P20_5", "P20_6", "P20_7", "P20_8", "P20_9", "P20_10", "P20_11", "P20_12", "P20_13", "P20_14", "P20_15", "P20_16", "P20_17", "P20_18", "P21_2", "P21_3", "P21_5", "P21_6", "P21_8", "P21_9", "P21_11", "P21_12", "P21_14", "P21_15", "P21_17", "P21_18", "P60_1", "P60_2", "P61_1"],
+            f100: ["P31_1", "P31_2", "P31_3", "P32_1", "P32_2", "P32_3", "P32_4", "P33_1", "P33_2", "P33_3", "P33_4", "P34_1", "P34_2", "P34_3", "P34_4", "P34_5", "P34_6", "P34_7", "P34_8", "P50_1", "P50_2", "P50_3", "P50_4", "P50_5", "P50_6", "P50_7", "P50_8", "P50_9", "P50_10", "P61_2", "P80_1", "P80_2", "P80_3", "P80_4", "P80_5", "P81_1", "P81_2", "P81_3", "P81_4", "P81_5", "fP41", "fP42", "fP43", "fP44", "fP45", "fP46", "fP47", "fP48", "fP49", "fP50"],
+            i50: Array.from({length:50}, (_, i) => `iset${i+1}`),
+            u50: ["P10_1", "P10_2", "P10_3", "P10_4", "P10_5", "P10_6", "P10_7", "P10_8", "P10_9", "P10_10", "P10_11", "P10_12", "P10_13", ...Array.from({length:37}, (_, i) => `uset${i+14}`)],
+            b32: ["P3_1", "P3_2", "P3_3", "P4_1", "P4_2", "P4_3", "P4_4", "P5_1", "P5_8", "P6_1", "P11_1", "P11_2", "P11_3", "P11_4", "P11_5", "P11_6", "P11_7", "P11_8", "P11_9", "P11_10", "P11_11", "P11_12", "P11_13", "P11_14", "P11_15", "P11_16", "P30_1", "P30_2", "P30_4", "P30_5", "P30_6", "P30_7"],
+            b64: ["P70_1", "P70_2", "P70_3", "P70_4", "P70_5", "P70_6", "P70_7", "P70_8", "P70_9", "P70_10", "P70_11", "P70_12", "P70_13", "P70_14", "P21_1", "P21_4", "P21_7", "P21_10", "P21_13", "P21_16", "P30_3", ...Array.from({length:11}, (_, i) => `bit${i+22}`)],
+            b96: Array.from({length:32}, (_, i) => `bit${i+1}`)
+        };
+
+        function switchDB(dbType, btn) {
+            currentDB = dbType;
+            document.querySelectorAll('.db-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderDOM();
+        }
+
+        function renderDOM() {
+            const names = (currentDB === 'main') ? dbMainNames : dbParamsNames;
+            createCards('tab1', names.f50);
+            createCards('tab2', names.f100);
+            createCards('tab3', names.i50);
+            createCards('tab4', names.u50);
+            createLeds('tab5', names.b32);
+            createLeds('tab6', names.b64);
+            createLeds('tab7', names.b96);
+        }
+
+        function createCards(tabId, names) {
+            document.getElementById(tabId).innerHTML = names.map((name, i) => `
+                <div class="card">
+                    <div class="card-title">${name}</div>
+                    <div class="card-value" id="${tabId}_${i}">--</div>
+                </div>
+            `).join('');
+        }
+
+        function createLeds(tabId, names) {
+            document.getElementById(tabId).innerHTML = names.map((name, i) => `
+                <div class="led-card">
+                    <div class="led" id="${tabId}_${i}"></div>
+                    <div class="led-name">${name}</div>
+                </div>
+            `).join('');
+        }
+
+        function openTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function updateData() {
+            const endpoint = (currentDB === 'main') ? '/api/data_all' : '/api/params_all';
+            
+            fetch(endpoint)
+                .then(res => res.json())
+                .then(data => {
+                    data.f50.forEach((v, i) => { const el = document.getElementById(`tab1_${i}`); if(el) el.innerText = v.toFixed(2); });
+                    data.f100.forEach((v, i) => { const el = document.getElementById(`tab2_${i}`); if(el) el.innerText = v.toFixed(2); });
+                    data.i50.forEach((v, i) => { const el = document.getElementById(`tab3_${i}`); if(el) el.innerText = v; });
+                    data.u50.forEach((v, i) => { const el = document.getElementById(`tab4_${i}`); if(el) el.innerText = v; });
+
+                    updateBitGroup('tab5', data.b32);
+                    updateBitGroup('tab6', data.b64);
+                    updateBitGroup('tab7', data.b96);
+
+                    setTimeout(updateData, 500);
+                })
+                .catch(() => setTimeout(updateData, 2000));
+        }
+
+        function updateBitGroup(tabId, bitmask) {
+            for (let i = 0; i < 32; i++) {
+                const isSet = (bitmask & (1 << i)) !== 0;
+                const led = document.getElementById(`${tabId}_${i}`);
+                if (led) {
+                    if (isSet) led.classList.add('on');
+                    else led.classList.remove('on');
+                }
+            }
+        }
+
+        renderDOM();
+        updateData();
+    </script>
+</body>
+</html>

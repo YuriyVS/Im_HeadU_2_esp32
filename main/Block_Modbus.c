@@ -218,6 +218,41 @@ void read_DB_Main_block_number(uint16_t num) {
             elements_count = 3;
             break;
 
+        case 5: // f50
+            request.reg_start = 0;
+            request.reg_size = 100;
+            dest_ptr = (void*)(uintptr_t)&DBParameters.f50.as_array;
+            elements_count = 50;
+            break;
+
+        case 6: // f100
+            request.reg_start = 100;
+            request.reg_size = 100;
+            dest_ptr = (void*)(uintptr_t)&DBParameters.f100.as_array;
+            elements_count = 50;
+            break;
+
+        case 7: // i50
+            request.reg_start = 200;
+            request.reg_size = 100;
+            dest_ptr = (void*)(uintptr_t)&DBParameters.i50.as_array;
+            elements_count = 50;
+            break;
+
+        case 8: // u50
+            request.reg_start = 300;
+            request.reg_size = 100;
+            dest_ptr = (void*)(uintptr_t)&DBParameters.u50.as_array;
+            elements_count = 50;
+            break;
+
+        case 9: // b32, b64, b96 (читаем все 3 блока сразу)
+            request.reg_start = 400;
+            request.reg_size = 6; // 3 блока по 32 бита = 6 регистров
+            dest_ptr = (void*)(uintptr_t)&DBParameters.b32; // Начало цепочки bool-блоков
+            elements_count = 3;
+            break;
+
         default:
             ESP_LOGW("MODBUS", "Неизвестный номер блока: %d", num);
             return;
