@@ -14,19 +14,20 @@
         }
         h2 { text-align: center; color: #3498db; margin-bottom: 15px; }
 
-        /* Переключатель Базы Данных */
+        /* Главный селектор режимов (Верхний блок) */
         .db-selector {
             display: flex;
             justify-content: center;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         .db-btn {
             background: #11161a;
             border: 2px solid #3498db;
             color: #3498db;
             padding: 10px 20px;
-            font-size: 1em;
+            font-size: 0.95em;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
@@ -38,7 +39,18 @@
             box-shadow: 0 0 12px rgba(52, 152, 219, 0.5);
         }
 
-        /* Вкладки типов данных */
+        /* Особый стиль для кнопки Журнала в верхнем меню */
+        .db-btn.log-btn-top {
+            border-color: #f1c40f;
+            color: #f1c40f;
+        }
+        .db-btn.log-btn-top.active {
+            background: #f1c40f;
+            color: #181e23;
+            box-shadow: 0 0 12px rgba(241, 196, 15, 0.5);
+        }
+
+        /* Вкладки параметров */
         .tabs { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 15px; }
         .tab-btn { 
             background: #2c3e50; border: none; color: #bdc3c7; padding: 8px 14px; 
@@ -47,37 +59,110 @@
         .tab-btn:hover { background: #34495e; color: #fff; }
         .tab-btn.active { background: #2980b9; color: #fff; }
 
-        /* Сетка карточек */
+        /* Контейнеры и карточки */
         .tab-content { display: none; }
         .tab-content.active { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
 
         .card { 
             background: #242c35; padding: 10px; border-radius: 8px; 
             border-left: 4px solid #3498db; box-shadow: 0 2px 6px rgba(0,0,0,0.3); 
+            user-select: none;
         }
         .card-title { font-size: 0.75em; color: #8899a6; text-transform: uppercase; word-break: break-all; }
         .card-value { font-size: 1.2em; font-weight: bold; color: #f1c40f; margin-top: 4px; }
 
-        /* Светодиоды */
+        /* Светодиоды и тумблеры */
         .bool-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; }
-        .led-card { display: flex; align-items: center; background: #242c35; padding: 8px 12px; border-radius: 8px; gap: 10px; }
-        .led { width: 14px; height: 14px; border-radius: 50%; background: #4a5568; flex-shrink: 0; }
+        .led-card { 
+            display: flex; align-items: center; background: #242c35; 
+            padding: 8px 12px; border-radius: 8px; gap: 10px; user-select: none;
+        }
+        .led { width: 14px; height: 14px; border-radius: 50%; background: #4a5568; flex-shrink: 0; transition: background 0.2s, box-shadow 0.2s; }
         .led.on { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
         .led-name { font-size: 0.85em; color: #d2d6dc; word-break: break-all; }
+
+        /* Стили для режима редактирования Уставок */
+        .card.editable, .led-card.editable {
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.2s;
+        }
+        .card.editable:hover, .led-card.editable:hover {
+            border-left-color: #f1c40f;
+            transform: translateY(-2px);
+        }
+
+        /* --- СТИЛИ ЖУРНАЛА СОБЫТИЙ --- */
+        .log-container {
+            grid-column: 1 / -1;
+            background: #242c35;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .log-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .log-btn {
+            background: #2c3e50;
+            border: 1px solid #3498db;
+            color: #ecf0f1;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .log-btn:hover { background: #3498db; }
+        .log-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        .log-table th {
+            background: #181e23;
+            color: #3498db;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #2c3e50;
+        }
+        .log-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #2c3e50;
+        }
+        .log-table tr:hover { background: #2c3e50; }
+
+        /* Бейджи уровней важности */
+        .badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .badge-info { background: #2980b9; color: #fff; }
+        .badge-warn { background: #e67e22; color: #fff; }
+        .badge-alarm { background: #e74c3c; color: #fff; }
     </style>
 </head>
 <body>
 
-    <h2>Система Мониторинга и Настроек</h2>
+    <h2>Система Мониторинга и Управления</h2>
 
-    <!-- Выбор базы данных: DBMain vs DBParameters -->
+    <!-- Верхняя панель переключения режимов -->
     <div class="db-selector">
-        <button class="db-btn active" onclick="switchDB('main', this)">Оперативные данные (DBMain)</button>
-        <button class="db-btn" onclick="switchDB('params', this)">Уставки / Настройки (DBParameters)</button>
+        <button class="db-btn active" onclick="switchTopMode('main', this)">Оперативные данные (DBMain)</button>
+        <button class="db-btn" onclick="switchTopMode('params', this)">Уставки / Настройки (DBParameters)</button>
+        <button class="db-btn log-btn-top" onclick="switchTopMode('logs', this)">📋 Журнал событий</button>
     </div>
 
-    <!-- Вкладки по типам -->
-    <div class="tabs">
+    <!-- Подвкладки типов данных (скрываются при открытии Журнала) -->
+    <div class="tabs" id="sub-tabs-container">
         <button class="tab-btn active" onclick="openTab('tab1', this)">Float 1-50</button>
         <button class="tab-btn" onclick="openTab('tab2', this)">Float 51-100</button>
         <button class="tab-btn" onclick="openTab('tab3', this)">Int32 1-50</button>
@@ -87,7 +172,7 @@
         <button class="tab-btn" onclick="openTab('tab7', this)">Bool 65-96</button>
     </div>
 
-    <!-- Контейнеры -->
+    <!-- Контент окон (БД и Параметры) -->
     <div id="tab1" class="tab-content active"></div>
     <div id="tab2" class="tab-content"></div>
     <div id="tab3" class="tab-content"></div>
@@ -95,9 +180,59 @@
     <div id="tab5" class="tab-content bool-grid"></div>
     <div id="tab6" class="tab-content bool-grid"></div>
     <div id="tab7" class="tab-content bool-grid"></div>
+    
+    <!-- Контент Журнала Событий -->
+    <div id="tab8" class="tab-content" style="grid-template-columns: 1fr;">
+        <div class="log-container">
+            <div class="log-toolbar">
+                <button class="log-btn" id="btn-log-prev" onclick="changeLogPage(-1)">◀ Назад</button>
+                <span id="log-page-info" style="font-weight: bold; color: #f1c40f;">Стр. 1</span>
+                <button class="log-btn" id="btn-log-next" onclick="changeLogPage(1)">Вперед ▶</button>
+                <button class="log-btn" onclick="triggerImmediateUpdate()" style="margin-left: 10px;">🔄 Обновить</button>
+                <span id="log-total-info" style="margin-left: auto; color: #8899a6; font-size: 0.9em;">Записей: 0</span>
+            </div>
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>Время (Таймштамп)</th>
+                        <th>Код события</th>
+                        <th>Уровень</th>
+                        <th>Значение</th>
+                        <th>Param ID</th>
+                    </tr>
+                </thead>
+                <tbody id="log-table-body">
+                    <tr><td colspan="5" style="text-align: center; color: #8899a6;">Загрузка данных...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <script>
-        let currentDB = 'main'; // 'main' или 'params'
+        // --- НАСТРОЙКИ ОПРОСА ---
+        const POLL_INTERVAL_MS = 300;  // Частота обновления UI (в миллисекундах)
+        const ERROR_RETRY_MS   = 2000; // Пауза при ошибке сети
+        
+        let currentTopMode = 'main'; // 'main', 'params' или 'logs'
+        let currentDB = 'main';      // 'main' или 'params'
+        let currentSubTab = 'tab1';  // Текущая активная подвкладка (tab1..tab7)
+        let activeGroup = 'f50';     // Активная группа для опроса по Modbus
+        let lastParamsMasks = { b32: 0, b64: 0, b96: 0 }; // Кэш битовых масок уставок
+
+        // Переменные состояния для пагинации журнала событий
+        let logOffset = 0;
+        const LOG_LIMIT = 12;
+        let logTotalInRing = 0;
+
+        // Контроллеры фоновых запросов
+        let activeFetchController = null;
+        let updateTimer = null;
+
+        // Карта соответствия ID вкладок именам групп Modbus
+        const tabGroupMap = {
+            tab1: 'f50', tab2: 'f100', tab3: 'i50', tab4: 'u50',
+            tab5: 'b32', tab6: 'b64', tab7: 'b96', tab8: 'logs'
+        };
 
         // Словари имен для DBMain
         const dbMainNames = {
@@ -121,11 +256,47 @@
             b96: Array.from({length:32}, (_, i) => `bit${i+1}`)
         };
 
-        function switchDB(dbType, btn) {
-            currentDB = dbType;
+        // Функция переключения верхнего режима (Main / Params / Logs)
+        function switchTopMode(mode, btn) {
+            if (currentTopMode === mode) return;
+            currentTopMode = mode;
+            
             document.querySelectorAll('.db-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            renderDOM();
+
+            const subTabsContainer = document.getElementById('sub-tabs-container');
+
+            if (mode === 'logs') {
+                // В режиме Журнала скрываем подвкладки
+                subTabsContainer.style.display = 'none';
+                activeGroup = 'logs';
+
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.getElementById('tab8').classList.add('active');
+            } else {
+                // В режиме БД возвращаем подвкладки
+                subTabsContainer.style.display = 'flex';
+                currentDB = mode; // 'main' или 'params'
+                activeGroup = tabGroupMap[currentSubTab];
+
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.getElementById(currentSubTab).classList.add('active');
+
+                renderDOM();
+            }
+
+            triggerImmediateUpdate();
+        }
+
+        function openTab(tabId, btn) {
+            currentSubTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+
+            activeGroup = tabGroupMap[tabId];
+            triggerImmediateUpdate();
         }
 
         function renderDOM() {
@@ -140,8 +311,10 @@
         }
 
         function createCards(tabId, names) {
+            const group = tabGroupMap[tabId];
             document.getElementById(tabId).innerHTML = names.map((name, i) => `
-                <div class="card">
+                <div class="card ${currentDB === 'params' ? 'editable' : ''}" 
+                     onclick="editParam('${group}', ${i}, '${name}')">
                     <div class="card-title">${name}</div>
                     <div class="card-value" id="${tabId}_${i}">--</div>
                 </div>
@@ -149,39 +322,93 @@
         }
 
         function createLeds(tabId, names) {
+            const group = tabGroupMap[tabId];
             document.getElementById(tabId).innerHTML = names.map((name, i) => `
-                <div class="led-card">
+                <div class="led-card ${currentDB === 'params' ? 'editable' : ''}" 
+                     onclick="toggleParamBit('${group}', ${i}, '${name}')">
                     <div class="led" id="${tabId}_${i}"></div>
                     <div class="led-name">${name}</div>
                 </div>
             `).join('');
         }
 
-        function openTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            btn.classList.add('active');
+        function triggerImmediateUpdate() {
+            if (activeFetchController) {
+                activeFetchController.abort();
+            }
+            clearTimeout(updateTimer);
+            updateData();
         }
 
+        // Цикл опроса
         function updateData() {
-            const endpoint = (currentDB === 'main') ? '/api/data_all' : '/api/params_all';
+            if (activeFetchController) {
+                activeFetchController.abort();
+            }
+            activeFetchController = new AbortController();
+
+            const reqDB = currentDB;
+            const reqGroup = activeGroup;
+
+            // --- ВЕТКА 1: Чтение Журнала Событий (/api/logs) ---
+            if (reqGroup === 'logs') {
+                const endpoint = `/api/logs?offset=${logOffset}&limit=${LOG_LIMIT}`;
+                
+                fetch(endpoint, { signal: activeFetchController.signal })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (activeGroup !== 'logs') return;
+
+                        logTotalInRing = data.total || 0;
+                        renderLogTable(data.logs || []);
+                        updateLogPaginationControls();
+
+                        updateTimer = setTimeout(updateData, 2000); // Опрос каждые 2 секунды
+                    })
+                    .catch(err => {
+                        if (err.name === 'AbortError') return;
+                        updateTimer = setTimeout(updateData, ERROR_RETRY_MS);
+                    });
+                return;
+            }
+
+            // --- ВЕТКА 2: Чтение регистров DBMain / DBParameters ---
+            const baseUrl = (reqDB === 'main') ? '/api/data_all' : '/api/params_all';
+            const endpoint = `${baseUrl}?group=${reqGroup}`;
             
-            fetch(endpoint)
+            fetch(endpoint, { signal: activeFetchController.signal })
                 .then(res => res.json())
                 .then(data => {
-                    data.f50.forEach((v, i) => { const el = document.getElementById(`tab1_${i}`); if(el) el.innerText = v.toFixed(2); });
-                    data.f100.forEach((v, i) => { const el = document.getElementById(`tab2_${i}`); if(el) el.innerText = v.toFixed(2); });
-                    data.i50.forEach((v, i) => { const el = document.getElementById(`tab3_${i}`); if(el) el.innerText = v; });
-                    data.u50.forEach((v, i) => { const el = document.getElementById(`tab4_${i}`); if(el) el.innerText = v; });
+                    if (reqDB !== currentDB || reqGroup !== activeGroup) return;
 
-                    updateBitGroup('tab5', data.b32);
-                    updateBitGroup('tab6', data.b64);
-                    updateBitGroup('tab7', data.b96);
+                    const tabId = Object.keys(tabGroupMap).find(key => tabGroupMap[key] === reqGroup);
+                    const val = data[reqGroup];
 
-                    setTimeout(updateData, 500);
+                    if (val !== undefined) {
+                        if (['f50', 'f100'].includes(reqGroup)) {
+                            val.forEach((v, i) => { 
+                                const el = document.getElementById(`${tabId}_${i}`); 
+                                if(el) el.innerText = v.toFixed(2); 
+                            });
+                        } else if (['i50', 'u50'].includes(reqGroup)) {
+                            val.forEach((v, i) => { 
+                                const el = document.getElementById(`${tabId}_${i}`); 
+                                if(el) el.innerText = v; 
+                            });
+                        } else if (['b32', 'b64', 'b96'].includes(reqGroup)) {
+                            updateBitGroup(tabId, val);
+                            if (currentDB === 'params') {
+                                lastParamsMasks[reqGroup] = val;
+                            }
+                        }
+                    }
+
+                    updateTimer = setTimeout(updateData, POLL_INTERVAL_MS);
                 })
-                .catch(() => setTimeout(updateData, 2000));
+                .catch(err => {
+                    if (err.name === 'AbortError') return;
+                    updateTimer = setTimeout(updateData, ERROR_RETRY_MS);
+                });
         }
 
         function updateBitGroup(tabId, bitmask) {
@@ -195,6 +422,107 @@
             }
         }
 
+        // --- ЛОГИКА ЖУРНАЛА СОБЫТИЙ ---
+
+        function renderLogTable(logs) {
+            const tbody = document.getElementById('log-table-body');
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #8899a6;">Записи отсутствуют</td></tr>`;
+                return;
+            }
+
+            const sevBadges = {
+                0: '<span class="badge badge-info">INFO</span>',
+                1: '<span class="badge badge-warn">WARN</span>',
+                2: '<span class="badge badge-alarm">ALARM</span>'
+            };
+
+            tbody.innerHTML = logs.map(item => {
+                const timeStr = formatTimestamp(item.time);
+                const hexId = '0x' + item.id.toString(16).padStart(4, '0').toUpperCase();
+                const sevHtml = sevBadges[item.sev] || `<span class="badge badge-info">${item.sev}</span>`;
+                const valStr = (typeof item.val === 'number') ? item.val.toFixed(2) : item.val;
+
+                return `
+                    <tr>
+                        <td>${timeStr}</td>
+                        <td><code>${hexId}</code></td>
+                        <td>${sevHtml}</td>
+                        <td style="font-weight: bold; color: #f1c40f;">${valStr}</td>
+                        <td>${item.param}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatTimestamp(ms) {
+            if (!ms) return '00:00:00';
+            const sec = Math.floor(ms / 1000);
+            const hrs = Math.floor(sec / 3600) % 24;
+            const mins = Math.floor((sec % 3600) / 60);
+            const secs = sec % 60;
+            return `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        }
+
+        function changeLogPage(direction) {
+            const newOffset = logOffset + (direction * LOG_LIMIT);
+            if (newOffset >= 0 && newOffset < logTotalInRing) {
+                logOffset = newOffset;
+                triggerImmediateUpdate();
+            }
+        }
+
+        function updateLogPaginationControls() {
+            const currentPage = Math.floor(logOffset / LOG_LIMIT) + 1;
+            const totalPages = Math.ceil(logTotalInRing / LOG_LIMIT) || 1;
+
+            document.getElementById('log-page-info').innerText = `Стр. ${currentPage} из ${totalPages}`;
+            document.getElementById('log-total-info').innerText = `Всего записей: ${logTotalInRing}`;
+
+            document.getElementById('btn-log-prev').disabled = (logOffset <= 0);
+            document.getElementById('btn-log-next').disabled = (logOffset + LOG_LIMIT >= logTotalInRing);
+        }
+
+        // --- ЛОГИКА ЗАПИСИ (EDIT / WRITE) ---
+
+        function editParam(group, index, name) {
+            if (currentDB !== 'params') return;
+
+            const tabId = Object.keys(tabGroupMap).find(key => tabGroupMap[key] === group);
+            const currentVal = document.getElementById(`${tabId}_${index}`).innerText;
+            const newVal = prompt(`Изменить уставку [${name}]:`, currentVal);
+
+            if (newVal !== null && !isNaN(parseFloat(newVal))) {
+                sendWriteRequest(group, index, parseFloat(newVal));
+            }
+        }
+
+        function toggleParamBit(group, bitIndex, name) {
+            if (currentDB !== 'params') return;
+
+            let currentMask = lastParamsMasks[group];
+            let newMask = (currentMask ^ (1 << bitIndex)) >>> 0; 
+
+            sendWriteRequest(group, bitIndex, newMask);
+        }
+
+        function sendWriteRequest(group, index, val) {
+            fetch('/api/param_write', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ group: group, index: index, val: val })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Write failed");
+                return res.json();
+            })
+            .then(data => {
+                triggerImmediateUpdate();
+            })
+            .catch(err => alert("Ошибка записи параметра в STM32!"));
+        }
+
+        // Инициализация
         renderDOM();
         updateData();
     </script>

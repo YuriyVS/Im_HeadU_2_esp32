@@ -12,6 +12,7 @@ idf_component_register(
     Block_GPIO.c
     Block_Network.c
     web_server.c
+    event_log.c
 
     INCLUDE_DIRS 
     "include"       # optional, add here public include directories    
@@ -24,6 +25,7 @@ idf_component_register(
     esp_hw_support
     esp_mm
     efuse
+    json    
 
     PRIV_REQUIRES       # optional, list the private requirements
     EMBED_TXTFILES "index.html"

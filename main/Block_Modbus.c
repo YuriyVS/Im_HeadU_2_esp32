@@ -280,6 +280,51 @@ void read_DB_Main_block_number(uint16_t num) {
     }
 }
 
+// Вычитка страницы журнала за 1 запрос Modbus
+esp_err_t modbus_read_log_page(uint16_t start_depth, uint8_t req_count, LogEntry_t *out_logs, uint8_t *out_fetched) 
+{
+    if (req_count > 15) req_count = 15; // Лимит кадра Modbus (15 записей = 120 регистров = 240 байт)
+
+    uint16_t rx_regs[120]; // Буфер под 120 регистров Modbus
+    mb_param_request_t req = {
+        .slave_addr = SLAVE_ADDR,
+        .command    = 0x03,                         // Read Holding Registers
+        .reg_start  = 2010 + (start_depth * 8),     // Вычисляем стартовый адрес Modbus
+        .reg_size   = req_count * 8                 // Каждая запись = 8 регистров
+    };
+
+    esp_err_t err = mbc_master_send_request(&req, rx_regs);
+    if (err != ESP_OK) {
+        *out_fetched = 0;
+        return err;
+    }
+
+    // Декодируем сетевой Big-Endian буфер в массив структур LogEntry_t
+    for (uint8_t i = 0; i < req_count; i++) {
+        uint16_t *r = &rx_regs[i * 8]; // Указатель на 8 регистров i-й записи
+
+        // 1. timestamp (uint32)
+        out_logs[i].timestamp = ((uint32_t)r[0] << 16) | r[1];
+
+        // 2. event_id (uint16)
+        out_logs[i].event_id  = r[2];
+
+        // 3. severity (uint8) & flags (uint8)
+        out_logs[i].severity  = (r[3] >> 8) & 0xFF;
+        out_logs[i].flags     = r[3] & 0xFF;
+
+        // 4. value (float)
+        uint32_t val_raw      = ((uint32_t)r[4] << 16) | r[5];
+        memcpy(&out_logs[i].value, &val_raw, sizeof(float));
+
+        // 5. param_id (uint32)
+        out_logs[i].param_id  = ((uint32_t)r[6] << 16) | r[7];
+    }
+
+    *out_fetched = req_count;
+    return ESP_OK;
+}
+
 /**
  * @brief Чтение группы 32-битных переменных из DBMain
  * @param start_addr Modbus-адрес (через GET_MB_ADDR)
@@ -364,4 +409,24 @@ esp_err_t read_DB_Main_single(uint16_t addr) {
     }
 
     return err;
+}
+
+// Запись 32-битной ячейки по Modbus (2 регистра)
+esp_err_t modbus_write_param_32(uint16_t reg_start, uint32_t val32) 
+{
+    uint16_t tx_regs[2];
+    
+    // Порядок слов (CDAB - Младшее слово в Reg0, Старшее в Reg1)
+    tx_regs[0] = (uint16_t)(val32 & 0xFFFF);
+    tx_regs[1] = (uint16_t)((val32 >> 16) & 0xFFFF);
+
+    mb_param_request_t request = {
+        .slave_addr = SLAVE_ADDR,
+        .command    = 0x10, // Функция 16 (0x10) - Write Multiple Registers
+        .reg_start  = reg_start,
+        .reg_size   = 2
+    };
+
+    // ВАЖНО: используем mbc_master_send_request с буквой 'c'
+    return mbc_master_send_request(&request, tx_regs);
 }

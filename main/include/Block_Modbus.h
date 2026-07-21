@@ -5,6 +5,7 @@
 #include "mbcontroller.h"
 #include "DB_Parameters.h"
 #include "DB_Main.h"
+#include "event_log.h"
 
 
 #define UART_BAUD_RATE     115200
@@ -24,8 +25,10 @@ extern void init_modbus_slave_all_in_one();
 extern void init_modbus_master();
 extern void read_all_floats_block();
 extern void read_DB_Main_block_number(uint16_t num);
+extern esp_err_t modbus_read_log_page(uint16_t start_depth, uint8_t req_count, LogEntry_t *out_logs, uint8_t *out_fetched); // Вычитка страницы журнала за 1 запрос Modbus
 extern void read_DB_Main_start_size(uint16_t start_addr, uint16_t num_vars);
 extern esp_err_t read_DB_Main_single(uint16_t addr);
+extern esp_err_t modbus_write_param_32(uint16_t reg_start, uint32_t val32);
 extern const mb_parameter_descriptor_t device_parameters[];
 
 

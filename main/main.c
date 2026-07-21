@@ -12,6 +12,7 @@
 #include "Block_Modbus.h"
 #include "Block_Network.h"
 #include "web_server.h"
+#include "event_log.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -182,7 +183,8 @@ void vTaskModbus(void *pvParameters) {
         //     }
         // }
 
-        read_DB_Main_block_number(count_takt);
+        // read_DB_Main_block_number(count_takt);
+
         // read_DB_Main_single(GET_MB_ADDR(DBMain.f50.GenFreq));
         // read_DB_Main_single(GET_MB_ADDR(DBMain.b32));
         // read_DB_Main_start_size(GET_MB_ADDR(DBMain.f50.GenFreq), 10);
