@@ -13,6 +13,7 @@ idf_component_register(
     Block_Network.c
     web_server.c
     event_log.c
+    trace_buffer.c
 
     INCLUDE_DIRS 
     "include"       # optional, add here public include directories    

@@ -13,6 +13,7 @@
 #include "Block_Network.h"
 #include "web_server.h"
 #include "event_log.h"
+#include "trace_buffer.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

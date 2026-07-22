@@ -526,11 +526,100 @@ esp_err_t api_logs_export_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
+// =============================================================================
+// 1. ОБРАБОТЧИК GET /api/trace_read (Вычитка 1000 точек)
+// =============================================================================
+esp_err_t trace_read_http_handler(httpd_req_t *req) 
+{
+    // Статическая переменная в BSS, чтобы не переполнять стек задачи HTTP
+    static TraceBuffer_t trace;
+
+    // Вычитываем весь буфер из STM32 по Modbus RTU
+    esp_err_t err = modbus_read_full_trace(&trace);
+    if (err != ESP_OK) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "STM32 Read Failed");
+        return ESP_FAIL;
+    }
+
+    // Настраиваем заголовок JSON
+    httpd_resp_set_type(req, "application/json");
+
+    // Формируем и отправляем JSON кусками (chunked transmission)
+    char chunk[160];
+    
+    // 1. Заголовок JSON с метаданными
+    snprintf(chunk, sizeof(chunk), 
+             "{\"is_running\":%s,\"head\":%u,\"is_full\":%u,\"sample_count\":%" PRIu32 ",\"useti\":[",
+             trace.is_running ? "true" : "false",
+             trace.head,
+             trace.is_full,
+             trace.sample_count);
+    httpd_resp_sendstr_chunk(req, chunk);
+
+    // 2. Массив значений Useti (1000 float)
+    for (int i = 0; i < TRACE_SAMPLES; i++) {
+        snprintf(chunk, sizeof(chunk), "%.2f%s", trace.data[i].useti, (i < TRACE_SAMPLES - 1) ? "," : "");
+        httpd_resp_sendstr_chunk(req, chunk);
+    }
+
+    httpd_resp_sendstr_chunk(req, "],\"iakb\":[");
+
+    // 3. Массив значений Iakb (1000 float)
+    for (int i = 0; i < TRACE_SAMPLES; i++) {
+        snprintf(chunk, sizeof(chunk), "%.2f%s", trace.data[i].iakb, (i < TRACE_SAMPLES - 1) ? "," : "");
+        httpd_resp_sendstr_chunk(req, chunk);
+    }
+
+    // 4. Закрываем JSON
+    httpd_resp_sendstr_chunk(req, "]}");
+    httpd_resp_sendstr_chunk(req, NULL); // Завершение передачи (пустой чанк)
+
+    return ESP_OK;
+}
+
+// =============================================================================
+// 2. ОБРАБОТЧИК POST /api/trace_control (Управление Старт / Стоп)
+// =============================================================================
+esp_err_t trace_control_http_handler(httpd_req_t *req) 
+{
+    char buf[128];
+    int total_len = req->content_len;
+    int cur_len = 0;
+
+    if (total_len >= sizeof(buf)) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Content too long");
+        return ESP_FAIL;
+    }
+
+    int received = httpd_req_recv(req, buf, total_len);
+    if (received <= 0) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive post data");
+        return ESP_FAIL;
+    }
+    buf[received] = '\0';
+
+    // Проверяем наличие команды в JSON ("start" или "stop")
+    bool start_cmd = (strstr(buf, "\"start\"") != NULL);
+
+    // Отправляем команду по Modbus в STM32 (запись в регистр 3000)
+    esp_err_t err = modbus_write_trace_control(start_cmd);
+
+    if (err == ESP_OK) {
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"status\":\"ok\"}");
+    } else {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Modbus Write Failed");
+    }
+
+    return ESP_OK;
+}
+
 // 4. Функция запуска самого веб-сервера
 httpd_handle_t start_webserver(void) {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 8; // С запасом
+    config.max_uri_handlers = 16; // С запасом
+    config.stack_size = 8192;
 
     ESP_LOGI("WEB", "Запуск HTTP сервера на порту %d", config.server_port);
 
@@ -585,6 +674,22 @@ httpd_handle_t start_webserver(void) {
         .user_ctx = NULL
         };
         httpd_register_uri_handler(server, &uri_logs_export);
+
+        httpd_uri_t uri_trace_read = {
+        .uri       = "/api/trace_read",
+        .method    = HTTP_GET,
+        .handler   = trace_read_http_handler,
+        .user_ctx  = NULL
+        };
+        httpd_register_uri_handler(server, &uri_trace_read);
+
+        httpd_uri_t uri_trace_control = {
+        .uri       = "/api/trace_control",
+        .method    = HTTP_POST,
+        .handler   = trace_control_http_handler,
+        .user_ctx  = NULL
+        };
+        httpd_register_uri_handler(server, &uri_trace_control);
         
         return server;
     }

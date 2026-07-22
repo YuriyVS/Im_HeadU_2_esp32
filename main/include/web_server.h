@@ -8,6 +8,7 @@
 #include "DB_Main.h"
 #include "Block_FRAM.h"
 #include "Block_Modbus.h"
+#include "trace_buffer.h"
 // Убедитесь, что здесь подключен файл с вашей структурой DBMain, 
 // чтобы сервер видел переменные UsetiV и IakbA!
 
@@ -20,6 +21,8 @@ extern esp_err_t api_params_all_handler(httpd_req_t *req);
 extern esp_err_t api_param_write_handler(httpd_req_t *req);
 extern esp_err_t api_logs_get_handler(httpd_req_t *req);
 extern esp_err_t api_logs_export_handler(httpd_req_t *req);
+extern esp_err_t trace_read_http_handler(httpd_req_t *req);
+extern esp_err_t trace_control_http_handler(httpd_req_t *req);
 extern httpd_handle_t start_webserver(void);
 //extern const char *index_html;
 

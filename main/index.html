@@ -46,6 +46,9 @@
         .db-btn.chart-btn-top { border-color: #2ecc71; color: #2ecc71; }
         .db-btn.chart-btn-top.active { background: #2ecc71; color: #181e23; box-shadow: 0 0 12px rgba(46, 204, 113, 0.5); }
 
+        .db-btn.trace-btn-top { border-color: #e74c3c; color: #e74c3c; }
+        .db-btn.trace-btn-top.active { background: #e74c3c; color: #fff; box-shadow: 0 0 12px rgba(231, 76, 60, 0.5); }
+
         /* Вкладки параметров */
         .tabs { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 15px; }
         .tab-btn { 
@@ -81,7 +84,7 @@
         .card.editable, .led-card.editable { cursor: pointer; transition: transform 0.1s, border-color 0.2s; }
         .card.editable:hover, .led-card.editable:hover { border-left-color: #f1c40f; transform: translateY(-2px); }
 
-        /* --- СТИЛИ ЖУРНАЛА СОБЫТИЙ --- */
+        /* --- СТИЛИ ЖУРНАЛА И СЛЕДА --- */
         .log-container {
             grid-column: 1 / -1;
             background: #242c35;
@@ -104,14 +107,13 @@
         .badge-warn { background: #e67e22; color: #fff; }
         .badge-alarm { background: #e74c3c; color: #fff; }
 
-        /* --- СТИЛИ ОСЦИЛЛОГРАФА И ПАНЕЛИ УПРАВЛЕНИЯ ГРАФИКОМ --- */
         .chart-legend { display: flex; gap: 20px; justify-content: center; margin-bottom: 10px; font-weight: bold; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 6px; }
         .legend-color { width: 14px; height: 14px; border-radius: 3px; }
         
         .chart-controls {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: flex-start;
             align-items: center;
             background: #181e23;
@@ -132,7 +134,17 @@
         }
         .chart-controls input[type="number"] { width: 65px; text-align: center; }
 
-        canvas { width: 100%; height: 350px; background: #181e23; border-radius: 6px; border: 1px solid #2c3e50; }
+        canvas { width: 100%; height: 380px; background: #181e23; border-radius: 6px; border: 1px solid #2c3e50; }
+        
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-running { background: #27ae60; color: #fff; }
+        .status-stopped { background: #c0392b; color: #fff; }
     </style>
 </head>
 <body>
@@ -144,6 +156,7 @@
         <button class="db-btn active" onclick="switchTopMode('main', this)">Оперативные данные (DBMain)</button>
         <button class="db-btn" onclick="switchTopMode('params', this)">Уставки / Настройки (DBParameters)</button>
         <button class="db-btn chart-btn-top" onclick="switchTopMode('charts', this)">📈 Осциллограф / График</button>
+        <button class="db-btn trace-btn-top" onclick="switchTopMode('trace', this)">📉 След (1 мс / 1000 точек)</button>
         <button class="db-btn log-btn-top" onclick="switchTopMode('logs', this)">📋 Журнал событий</button>
     </div>
 
@@ -195,10 +208,9 @@
         </div>
     </div>
 
-    <!-- Контент Осциллографа -->
+    <!-- Контент Осциллографа (Онлайн 300 мс) -->
     <div id="tab9" class="tab-content" style="grid-template-columns: 1fr;">
         <div class="log-container">
-            <!-- Легенда сигналов -->
             <div class="chart-legend">
                 <div class="legend-item">
                     <div class="legend-color" style="background: #3498db;"></div>
@@ -210,7 +222,6 @@
                 </div>
             </div>
 
-            <!-- Панель настроек осциллографа -->
             <div class="chart-controls">
                 <label>История:
                     <select id="chart-samples-select" onchange="changeChartSamples(this.value)">
@@ -229,13 +240,11 @@
                     </select>
                 </label>
 
-                <!-- Ввод рамок при фиксированном масштабе -->
                 <div id="fixed-scale-inputs" style="display: none; gap: 10px; margin-left: 10px; align-items: center;">
                     <label>Uсети: <input type="number" id="useti-min" value="-300" onchange="drawCanvasChart()"> .. <input type="number" id="useti-max" value="300" onchange="drawCanvasChart()"> В</label>
                     <label style="margin-left: 10px;">Iакб: <input type="number" id="iakb-min" value="-100" onchange="drawCanvasChart()"> .. <input type="number" id="iakb-max" value="100" onchange="drawCanvasChart()"> А</label>
                 </div>
 
-                <!-- Кнопка скачивания текущей истории сэмплов -->
                 <button class="log-btn" onclick="downloadChartCSV()" style="border-color: #2ecc71; color: #2ecc71; margin-left: auto;">
                     📥 Скачать график (CSV)
                 </button>
@@ -245,26 +254,58 @@
         </div>
     </div>
 
+    <!-- КОНТЕНТ ВЫСОКОСКОРОСТНОГО СЛЕДА (1000 точек / 1 мс) -->
+    <div id="tab10" class="tab-content" style="grid-template-columns: 1fr;">
+        <div class="log-container">
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e74c3c;"></div>
+                    <span>Uсети (След 1 мс): <span id="trace-val-useti" style="color: #e74c3c;">--</span> В</span>
+                </div>
+                <div class="legend-item" style="margin-left: 20px;">
+                    <div class="legend-color" style="background: #f39c12;"></div>
+                    <span>Iakb (След 1 мс): <span id="trace-val-iakb" style="color: #f39c12;">--</span> А</span>
+                </div>
+                <span id="trace-status-pill" class="status-pill status-running">ЗАПИСЬ (1000 Гц)</span>
+            </div>
+
+            <div class="chart-controls">
+                <button class="log-btn" onclick="sendTraceControl('start')" style="border-color: #2ecc71; color: #2ecc71;">▶ Запуск записи</button>
+                <button class="log-btn" onclick="sendTraceControl('stop')" style="border-color: #e74c3c; color: #e74c3c;">⏹ Стоп (Заморозка)</button>
+                <button class="log-btn" onclick="fetchTraceData()" style="border-color: #3498db; color: #3498db; margin-left: 10px;">🔄 Прочитать след из STM32</button>
+                
+                <button class="log-btn" onclick="downloadTraceCSV()" style="border-color: #2ecc71; color: #2ecc71; margin-left: auto;">
+                    📥 Скачать след (CSV 1000 точек)
+                </button>
+            </div>
+
+            <canvas id="traceChart"></canvas>
+        </div>
+    </div>
+
     <script>
         // --- НАСТРОЙКИ ОПРОСА ---
-        const POLL_INTERVAL_MS = 300;  // Частота обновления UI (в миллисекундах)
-        const ERROR_RETRY_MS   = 2000; // Пауза при ошибке сети
+        const POLL_INTERVAL_MS = 300;  
+        const ERROR_RETRY_MS   = 2000; 
         
-        let currentTopMode = 'main'; // 'main', 'params', 'logs' или 'charts'
-        let currentDB = 'main';      // 'main' или 'params'
-        let currentSubTab = 'tab1';  // Текущая активная подвкладка (tab1..tab7)
-        let activeGroup = 'f50';     // Активная группа для опроса по Modbus
-        let lastParamsMasks = { b32: 0, b64: 0, b96: 0 }; // Кэш битовых масок уставок
+        let currentTopMode = 'main'; 
+        let currentDB = 'main';      
+        let currentSubTab = 'tab1';  
+        let activeGroup = 'f50';     
+        let lastParamsMasks = { b32: 0, b64: 0, b96: 0 }; 
 
         // Переменные состояния для пагинации журнала событий
         let logOffset = 0;
         const LOG_LIMIT = 12;
         let logTotalInRing = 0;
 
-        // --- ДИНАМИЧЕСКИЕ НАСТРОЙКИ ГРАФИКА ---
-        let maxChartPoints = 60;   // Число сэмплов по умолчанию (60)
-        let chartScaleMode = 'auto'; // 'auto' или 'fixed'
+        // --- ДИНАМИЧЕСКИЕ НАСТРОЙКИ ОНЛАЙН-ГРАФИКА ---
+        let maxChartPoints = 60;   
+        let chartScaleMode = 'auto'; 
         let chartHistory = { useti: [], iakb: [] };
+
+        // --- БУФЕР ВЫСОКОСКОРОСТНОГО СЛЕДА (1000 ТОЧЕК) ---
+        let traceData = { useti: [], iakb: [], head: 0, is_running: true, is_full: 0 };
 
         // Контроллеры фоновых запросов
         let activeFetchController = null;
@@ -273,7 +314,7 @@
         // Карта соответствия ID вкладок именам групп Modbus
         const tabGroupMap = {
             tab1: 'f50', tab2: 'f100', tab3: 'i50', tab4: 'u50',
-            tab5: 'b32', tab6: 'b64', tab7: 'b96', tab8: 'logs', tab9: 'f50'
+            tab5: 'b32', tab6: 'b64', tab7: 'b96', tab8: 'logs', tab9: 'f50', tab10: 'trace'
         };
 
         // Словари имен для DBMain
@@ -317,6 +358,11 @@
                 activeGroup = 'f50';
                 currentDB = 'main';
                 showTabContent('tab9');
+            } else if (mode === 'trace') {
+                subTabsContainer.style.display = 'none';
+                activeGroup = 'trace';
+                showTabContent('tab10');
+                fetchTraceData(); // Автоматически вычитываем след при переходе
             } else {
                 subTabsContainer.style.display = 'flex';
                 currentDB = mode;
@@ -408,7 +454,13 @@
                 return;
             }
 
-            // --- ВЕТКА 2: Чтение регистров (DBMain / DBParameters / Осциллограф) ---
+            // --- ВЕТКА 2: Вкладка Следа (опрос только по кнопке или переключению) ---
+            if (reqGroup === 'trace') {
+                updateTimer = setTimeout(updateData, 2000);
+                return;
+            }
+
+            // --- ВЕТКА 3: Чтение регистров (DBMain / DBParameters / Осциллограф) ---
             const baseUrl = (reqDB === 'main') ? '/api/data_all' : '/api/params_all';
             fetch(`${baseUrl}?group=${reqGroup}`, { signal: activeFetchController.signal })
                 .then(res => res.json())
@@ -418,10 +470,9 @@
                     const val = data[reqGroup];
 
                     if (val !== undefined) {
-                        // КРИТИЧЕСКАЯ ПРОВЕРКА: Наполняем буфер графика ТОЛЬКО из DBMain!
                         if (reqDB === 'main' && reqGroup === 'f50') {
-                            const uSetiVal = val[1]; // Useti (индекс 1)
-                            const iAkbVal  = val[3]; // Iakb (индекс 3)
+                            const uSetiVal = val[1]; 
+                            const iAkbVal  = val[3]; 
 
                             pushChartData(uSetiVal, iAkbVal);
 
@@ -432,7 +483,6 @@
                             }
                         }
 
-                        // Отрисовка значений в карточках
                         const tabId = Object.keys(tabGroupMap).find(key => tabGroupMap[key] === reqGroup);
                         if (['f50', 'f100'].includes(reqGroup)) {
                             val.forEach((v, i) => { const el = document.getElementById(`${tabId}_${i}`); if(el) el.innerText = v.toFixed(2); });
@@ -463,7 +513,181 @@
             }
         }
 
-        // --- ЛОГИКА И ИНТЕРАКТИВ ГРАФИКОВ (CANVAS) ---
+        // --- ЛОГИКА ВЫСОКОСКОРОСТНОГО СЛЕДА (1000 ТОЧЕК) ---
+
+        function fetchTraceData() {
+            fetch('/api/trace_read')
+                .then(res => res.json())
+                .then(data => {
+                    traceData.is_running = data.is_running;
+                    traceData.head = data.head || 0;
+                    traceData.is_full = data.is_full || 0;
+                    
+                    traceData.useti = unrollRingBuffer(data.useti || [], traceData.head, traceData.is_full);
+                    traceData.iakb  = unrollRingBuffer(data.iakb  || [], traceData.head, traceData.is_full);
+
+                    updateTracePill(data.is_running);
+
+                    if (traceData.useti.length > 0) {
+                        const lastIdx = traceData.useti.length - 1;
+                        document.getElementById('trace-val-useti').innerText = traceData.useti[lastIdx].toFixed(2);
+                        document.getElementById('trace-val-iakb').innerText  = traceData.iakb[lastIdx].toFixed(2);
+                    }
+
+                    drawTraceCanvas();
+                })
+                .catch(err => console.log("Trace fetch error:", err));
+        }
+
+        function unrollRingBuffer(rawArray, headIndex, isFull) {
+            if (!rawArray || rawArray.length === 0) return [];
+            const len = rawArray.length;
+            
+            if (!isFull && headIndex < len) {
+                return rawArray.slice(0, headIndex);
+            }
+
+            let result = new Array(len);
+            for (let i = 0; i < len; i++) {
+                result[i] = rawArray[(headIndex + i) % len];
+            }
+            return result;
+        }
+
+        function sendTraceControl(cmd) {
+            fetch('/api/trace_control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: cmd })
+            })
+            .then(res => res.json())
+            .then(data => {
+                setTimeout(fetchTraceData, 200); 
+            });
+        }
+
+        function updateTracePill(isRunning) {
+            const pill = document.getElementById('trace-status-pill');
+            if (isRunning) {
+                pill.className = 'status-pill status-running';
+                pill.innerText = 'ЗАПИСЬ (1000 Гц)';
+            } else {
+                pill.className = 'status-pill status-stopped';
+                pill.innerText = 'ЗАМОРОЖЕНО (СТОП)';
+            }
+        }
+
+        function drawTraceCanvas() {
+            const canvas = document.getElementById('traceChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+
+            const W = canvas.width;
+            const H = canvas.height;
+            const pad = 45;
+
+            ctx.clearRect(0, 0, W, H);
+
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x = pad; x < W - pad; x += (W - 2 * pad) / 10) { ctx.moveTo(x, pad); ctx.lineTo(x, H - pad); }
+            for (let y = pad; y < H - pad; y += (H - 2 * pad) / 4) { ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); }
+            ctx.stroke();
+
+            if (!traceData.useti.length) return;
+
+            let uMin = Math.min(...traceData.useti);
+            let uMax = Math.max(...traceData.useti);
+            if (uMin === uMax) { uMin -= 10; uMax += 10; }
+
+            let iMin = Math.min(...traceData.iakb);
+            let iMax = Math.max(...traceData.iakb);
+            if (iMin === iMax) { iMin -= 5; iMax += 5; }
+
+            drawZeroLine(ctx, uMin, uMax, W, H, pad, '#1e3a8a');
+            drawZeroLine(ctx, iMin, iMax, W, H, pad, '#78350f');
+
+            const totalPts = traceData.useti.length;
+            drawLineExact(ctx, traceData.useti, '#e74c3c', W, H, pad, uMin, uMax, totalPts);
+            drawLineExact(ctx, traceData.iakb, '#f39c12', W, H, pad, iMin, iMax, totalPts);
+
+            ctx.font = '11px sans-serif';
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText((uMax >= 0 ? '+' : '') + uMax.toFixed(0) + 'V', 5, pad + 10);
+            ctx.fillText((uMin >= 0 ? '+' : '') + uMin.toFixed(0) + 'V', 5, H - pad);
+
+            ctx.fillStyle = '#f39c12';
+            ctx.fillText((iMax >= 0 ? '+' : '') + iMax.toFixed(0) + 'A', W - pad + 5, pad + 10);
+            ctx.fillText((iMin >= 0 ? '+' : '') + iMin.toFixed(0) + 'A', W - pad + 5, H - pad);
+
+            ctx.fillStyle = '#8899a6';
+            ctx.fillText('0 мс', pad, H - 10);
+            ctx.fillText(Math.floor(totalPts / 2) + ' мс', pad + (W - 2 * pad) / 2 - 15, H - 10);
+            ctx.fillText(totalPts + ' мс', W - pad - 45, H - 10);
+        }
+
+        function drawLineExact(ctx, data, color, W, H, pad, min, max, totalPoints) {
+            if (data.length < 2) return;
+
+            const stepX = (W - 2 * pad) / (totalPoints - 1);
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+
+            data.forEach((v, i) => {
+                const x = pad + i * stepX;
+                let normV = (v - min) / (max - min);
+                if (normV < 0) normV = 0;
+                if (normV > 1) normV = 1;
+
+                const y = H - pad - normV * (H - 2 * pad);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+
+            ctx.stroke();
+        }
+
+        function downloadTraceCSV() {
+            if (!traceData.useti.length) {
+                alert("Массив следа пуст! Вычитайте след из STM32.");
+                return;
+            }
+
+            let csv = "N;Time_ms;Useti_V;Iakb_A\r\n";
+            const total = traceData.useti.length;
+
+            for (let i = 0; i < total; i++) {
+                let timeMs = i; 
+                let u = traceData.useti[i].toFixed(2);
+                let iAkb = traceData.iakb[i].toFixed(2);
+
+                csv += `${i + 1};${timeMs};${u};${iAkb}\r\n`;
+            }
+
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2,'0') + '-' + 
+                            String(now.getMinutes()).padStart(2,'0') + '-' + 
+                            String(now.getSeconds()).padStart(2,'0');
+
+            a.href = url;
+            a.download = `trace_${total}pts_${timeStr}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ГРАФИКА ОНЛАЙН ---
 
         function changeChartSamples(val) {
             maxChartPoints = parseInt(val, 10);
@@ -531,11 +755,10 @@
 
             const W = canvas.width;
             const H = canvas.height;
-            const pad = 45; // Отступ под подписи осей
+            const pad = 45;
 
             ctx.clearRect(0, 0, W, H);
 
-            // Координатная сетка
             ctx.strokeStyle = '#2c3e50';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -543,7 +766,6 @@
             for (let y = pad; y < H - pad; y += (H - 2 * pad) / 4) { ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); }
             ctx.stroke();
 
-            // Определение границ для Useti
             let uMin, uMax;
             if (chartScaleMode === 'fixed') {
                 uMin = parseFloat(document.getElementById('useti-min').value);
@@ -554,7 +776,6 @@
                 if (uMin === uMax) { uMin -= 5; uMax += 5; }
             }
 
-            // Определение границ для Iakb
             let iMin, iMax;
             if (chartScaleMode === 'fixed') {
                 iMin = parseFloat(document.getElementById('iakb-min').value);
@@ -565,23 +786,17 @@
                 if (iMin === iMax) { iMin -= 1; iMax += 1; }
             }
 
-            // Рисование нулевой линии (если ноль внутри диапазона)
             drawZeroLine(ctx, uMin, uMax, W, H, pad, '#1e3a8a');
             drawZeroLine(ctx, iMin, iMax, W, H, pad, '#78350f');
 
-            // Рисуем сигналы
             drawLine(ctx, chartHistory.useti, '#3498db', W, H, pad, uMin, uMax);
             drawLine(ctx, chartHistory.iakb, '#f1c40f', W, H, pad, iMin, iMax);
 
-            // Подписи пределов осей
             ctx.font = '11px sans-serif';
-            
-            // Useti limits (Слева, синий)
             ctx.fillStyle = '#3498db';
             ctx.fillText((uMax >= 0 ? '+' : '') + uMax.toFixed(0) + 'V', 5, pad + 10);
             ctx.fillText((uMin >= 0 ? '+' : '') + uMin.toFixed(0) + 'V', 5, H - pad);
 
-            // Iakb limits (Справа, желтый)
             ctx.fillStyle = '#f1c40f';
             ctx.fillText((iMax >= 0 ? '+' : '') + iMax.toFixed(0) + 'A', W - pad + 5, pad + 10);
             ctx.fillText((iMin >= 0 ? '+' : '') + iMin.toFixed(0) + 'A', W - pad + 5, H - pad);
