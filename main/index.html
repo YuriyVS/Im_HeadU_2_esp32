@@ -39,16 +39,12 @@
             box-shadow: 0 0 12px rgba(52, 152, 219, 0.5);
         }
 
-        /* Особый стиль для кнопки Журнала в верхнем меню */
-        .db-btn.log-btn-top {
-            border-color: #f1c40f;
-            color: #f1c40f;
-        }
-        .db-btn.log-btn-top.active {
-            background: #f1c40f;
-            color: #181e23;
-            box-shadow: 0 0 12px rgba(241, 196, 15, 0.5);
-        }
+        /* Особые стили для доп. кнопок верхнего меню */
+        .db-btn.log-btn-top { border-color: #f1c40f; color: #f1c40f; }
+        .db-btn.log-btn-top.active { background: #f1c40f; color: #181e23; box-shadow: 0 0 12px rgba(241, 196, 15, 0.5); }
+        
+        .db-btn.chart-btn-top { border-color: #2ecc71; color: #2ecc71; }
+        .db-btn.chart-btn-top.active { background: #2ecc71; color: #181e23; box-shadow: 0 0 12px rgba(46, 204, 113, 0.5); }
 
         /* Вкладки параметров */
         .tabs { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 15px; }
@@ -81,15 +77,9 @@
         .led.on { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
         .led-name { font-size: 0.85em; color: #d2d6dc; word-break: break-all; }
 
-        /* Стили для режима редактирования Уставок */
-        .card.editable, .led-card.editable {
-            cursor: pointer;
-            transition: transform 0.1s, border-color 0.2s;
-        }
-        .card.editable:hover, .led-card.editable:hover {
-            border-left-color: #f1c40f;
-            transform: translateY(-2px);
-        }
+        /* Стили редактирования уставок */
+        .card.editable, .led-card.editable { cursor: pointer; transition: transform 0.1s, border-color 0.2s; }
+        .card.editable:hover, .led-card.editable:hover { border-left-color: #f1c40f; transform: translateY(-2px); }
 
         /* --- СТИЛИ ЖУРНАЛА СОБЫТИЙ --- */
         .log-container {
@@ -99,55 +89,50 @@
             padding: 15px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
-        .log-toolbar {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        .log-btn {
-            background: #2c3e50;
-            border: 1px solid #3498db;
-            color: #ecf0f1;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
+        .log-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .log-btn { background: #2c3e50; border: 1px solid #3498db; color: #ecf0f1; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .log-btn:hover { background: #3498db; }
         .log-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .log-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9em;
-        }
-        .log-table th {
-            background: #181e23;
-            color: #3498db;
-            text-align: left;
-            padding: 10px;
-            border-bottom: 2px solid #2c3e50;
-        }
-        .log-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #2c3e50;
-        }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .log-table th { background: #181e23; color: #3498db; text-align: left; padding: 10px; border-bottom: 2px solid #2c3e50; }
+        .log-table td { padding: 8px 10px; border-bottom: 1px solid #2c3e50; }
         .log-table tr:hover { background: #2c3e50; }
 
-        /* Бейджи уровней важности */
-        .badge {
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            font-weight: bold;
-            display: inline-block;
-        }
+        .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; display: inline-block; }
         .badge-info { background: #2980b9; color: #fff; }
         .badge-warn { background: #e67e22; color: #fff; }
         .badge-alarm { background: #e74c3c; color: #fff; }
+
+        /* --- СТИЛИ ОСЦИЛЛОГРАФА И ПАНЕЛИ УПРАВЛЕНИЯ ГРАФИКОМ --- */
+        .chart-legend { display: flex; gap: 20px; justify-content: center; margin-bottom: 10px; font-weight: bold; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 14px; height: 14px; border-radius: 3px; }
+        
+        .chart-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-start;
+            align-items: center;
+            background: #181e23;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border: 1px solid #2c3e50;
+            flex-wrap: wrap;
+            font-size: 0.9em;
+        }
+        .chart-controls select, .chart-controls input {
+            background: #2c3e50;
+            border: 1px solid #3498db;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .chart-controls input[type="number"] { width: 65px; text-align: center; }
+
+        canvas { width: 100%; height: 350px; background: #181e23; border-radius: 6px; border: 1px solid #2c3e50; }
     </style>
 </head>
 <body>
@@ -158,10 +143,11 @@
     <div class="db-selector">
         <button class="db-btn active" onclick="switchTopMode('main', this)">Оперативные данные (DBMain)</button>
         <button class="db-btn" onclick="switchTopMode('params', this)">Уставки / Настройки (DBParameters)</button>
+        <button class="db-btn chart-btn-top" onclick="switchTopMode('charts', this)">📈 Осциллограф / График</button>
         <button class="db-btn log-btn-top" onclick="switchTopMode('logs', this)">📋 Журнал событий</button>
     </div>
 
-    <!-- Подвкладки типов данных (скрываются при открытии Журнала) -->
+    <!-- Подвкладки типов данных -->
     <div class="tabs" id="sub-tabs-container">
         <button class="tab-btn active" onclick="openTab('tab1', this)">Float 1-50</button>
         <button class="tab-btn" onclick="openTab('tab2', this)">Float 51-100</button>
@@ -189,6 +175,7 @@
                 <span id="log-page-info" style="font-weight: bold; color: #f1c40f;">Стр. 1</span>
                 <button class="log-btn" id="btn-log-next" onclick="changeLogPage(1)">Вперед ▶</button>
                 <button class="log-btn" onclick="triggerImmediateUpdate()" style="margin-left: 10px;">🔄 Обновить</button>
+                <button class="log-btn" onclick="window.location.href='/api/logs_export'" style="border-color: #2ecc71; color: #2ecc71;">📥 Скачать CSV</button>
                 <span id="log-total-info" style="margin-left: auto; color: #8899a6; font-size: 0.9em;">Записей: 0</span>
             </div>
             <table class="log-table">
@@ -208,12 +195,62 @@
         </div>
     </div>
 
+    <!-- Контент Осциллографа -->
+    <div id="tab9" class="tab-content" style="grid-template-columns: 1fr;">
+        <div class="log-container">
+            <!-- Легенда сигналов -->
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #3498db;"></div>
+                    <span>Useti: <span id="val-useti" style="color: #3498db;">--</span> В</span>
+                </div>
+                <div class="legend-item" style="margin-left: 20px;">
+                    <div class="legend-color" style="background: #f1c40f;"></div>
+                    <span>Iakb: <span id="val-iakb" style="color: #f1c40f;">--</span> А</span>
+                </div>
+            </div>
+
+            <!-- Панель настроек осциллографа -->
+            <div class="chart-controls">
+                <label>История:
+                    <select id="chart-samples-select" onchange="changeChartSamples(this.value)">
+                        <option value="30">30 сэмплов (9 сек)</option>
+                        <option value="60" selected>60 сэмплов (18 сек)</option>
+                        <option value="120">120 сэмплов (36 сек)</option>
+                        <option value="300">300 сэмплов (1.5 мин)</option>
+                        <option value="600">600 сэмплов (3 мин)</option>
+                    </select>
+                </label>
+
+                <label style="margin-left: 10px;">Масштаб:
+                    <select id="chart-scale-select" onchange="changeChartScaleMode(this.value)">
+                        <option value="auto" selected>Автоматический</option>
+                        <option value="fixed">Заданный (Фиксированный)</option>
+                    </select>
+                </label>
+
+                <!-- Ввод рамок при фиксированном масштабе -->
+                <div id="fixed-scale-inputs" style="display: none; gap: 10px; margin-left: 10px; align-items: center;">
+                    <label>Uсети: <input type="number" id="useti-min" value="-300" onchange="drawCanvasChart()"> .. <input type="number" id="useti-max" value="300" onchange="drawCanvasChart()"> В</label>
+                    <label style="margin-left: 10px;">Iакб: <input type="number" id="iakb-min" value="-100" onchange="drawCanvasChart()"> .. <input type="number" id="iakb-max" value="100" onchange="drawCanvasChart()"> А</label>
+                </div>
+
+                <!-- Кнопка скачивания текущей истории сэмплов -->
+                <button class="log-btn" onclick="downloadChartCSV()" style="border-color: #2ecc71; color: #2ecc71; margin-left: auto;">
+                    📥 Скачать график (CSV)
+                </button>
+            </div>
+
+            <canvas id="rtChart"></canvas>
+        </div>
+    </div>
+
     <script>
         // --- НАСТРОЙКИ ОПРОСА ---
         const POLL_INTERVAL_MS = 300;  // Частота обновления UI (в миллисекундах)
         const ERROR_RETRY_MS   = 2000; // Пауза при ошибке сети
         
-        let currentTopMode = 'main'; // 'main', 'params' или 'logs'
+        let currentTopMode = 'main'; // 'main', 'params', 'logs' или 'charts'
         let currentDB = 'main';      // 'main' или 'params'
         let currentSubTab = 'tab1';  // Текущая активная подвкладка (tab1..tab7)
         let activeGroup = 'f50';     // Активная группа для опроса по Modbus
@@ -224,6 +261,11 @@
         const LOG_LIMIT = 12;
         let logTotalInRing = 0;
 
+        // --- ДИНАМИЧЕСКИЕ НАСТРОЙКИ ГРАФИКА ---
+        let maxChartPoints = 60;   // Число сэмплов по умолчанию (60)
+        let chartScaleMode = 'auto'; // 'auto' или 'fixed'
+        let chartHistory = { useti: [], iakb: [] };
+
         // Контроллеры фоновых запросов
         let activeFetchController = null;
         let updateTimer = null;
@@ -231,7 +273,7 @@
         // Карта соответствия ID вкладок именам групп Modbus
         const tabGroupMap = {
             tab1: 'f50', tab2: 'f100', tab3: 'i50', tab4: 'u50',
-            tab5: 'b32', tab6: 'b64', tab7: 'b96', tab8: 'logs'
+            tab5: 'b32', tab6: 'b64', tab7: 'b96', tab8: 'logs', tab9: 'f50'
         };
 
         // Словари имен для DBMain
@@ -256,7 +298,7 @@
             b96: Array.from({length:32}, (_, i) => `bit${i+1}`)
         };
 
-        // Функция переключения верхнего режима (Main / Params / Logs)
+        // Переключение верхних режимов
         function switchTopMode(mode, btn) {
             if (currentTopMode === mode) return;
             currentTopMode = mode;
@@ -267,33 +309,35 @@
             const subTabsContainer = document.getElementById('sub-tabs-container');
 
             if (mode === 'logs') {
-                // В режиме Журнала скрываем подвкладки
                 subTabsContainer.style.display = 'none';
                 activeGroup = 'logs';
-
-                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-                document.getElementById('tab8').classList.add('active');
+                showTabContent('tab8');
+            } else if (mode === 'charts') {
+                subTabsContainer.style.display = 'none';
+                activeGroup = 'f50';
+                currentDB = 'main';
+                showTabContent('tab9');
             } else {
-                // В режиме БД возвращаем подвкладки
                 subTabsContainer.style.display = 'flex';
-                currentDB = mode; // 'main' или 'params'
+                currentDB = mode;
                 activeGroup = tabGroupMap[currentSubTab];
-
-                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-                document.getElementById(currentSubTab).classList.add('active');
-
+                showTabContent(currentSubTab);
                 renderDOM();
             }
 
             triggerImmediateUpdate();
         }
 
+        function showTabContent(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
         function openTab(tabId, btn) {
             currentSubTab = tabId;
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
             btn.classList.add('active');
+            showTabContent(tabId);
 
             activeGroup = tabGroupMap[tabId];
             triggerImmediateUpdate();
@@ -333,18 +377,14 @@
         }
 
         function triggerImmediateUpdate() {
-            if (activeFetchController) {
-                activeFetchController.abort();
-            }
+            if (activeFetchController) activeFetchController.abort();
             clearTimeout(updateTimer);
             updateData();
         }
 
-        // Цикл опроса
+        // Главный опрос данных
         function updateData() {
-            if (activeFetchController) {
-                activeFetchController.abort();
-            }
+            if (activeFetchController) activeFetchController.abort();
             activeFetchController = new AbortController();
 
             const reqDB = currentDB;
@@ -352,18 +392,14 @@
 
             // --- ВЕТКА 1: Чтение Журнала Событий (/api/logs) ---
             if (reqGroup === 'logs') {
-                const endpoint = `/api/logs?offset=${logOffset}&limit=${LOG_LIMIT}`;
-                
-                fetch(endpoint, { signal: activeFetchController.signal })
+                fetch(`/api/logs?offset=${logOffset}&limit=${LOG_LIMIT}`, { signal: activeFetchController.signal })
                     .then(res => res.json())
                     .then(data => {
                         if (activeGroup !== 'logs') return;
-
                         logTotalInRing = data.total || 0;
                         renderLogTable(data.logs || []);
                         updateLogPaginationControls();
-
-                        updateTimer = setTimeout(updateData, 2000); // Опрос каждые 2 секунды
+                        updateTimer = setTimeout(updateData, 2000);
                     })
                     .catch(err => {
                         if (err.name === 'AbortError') return;
@@ -372,34 +408,39 @@
                 return;
             }
 
-            // --- ВЕТКА 2: Чтение регистров DBMain / DBParameters ---
+            // --- ВЕТКА 2: Чтение регистров (DBMain / DBParameters / Осциллограф) ---
             const baseUrl = (reqDB === 'main') ? '/api/data_all' : '/api/params_all';
-            const endpoint = `${baseUrl}?group=${reqGroup}`;
-            
-            fetch(endpoint, { signal: activeFetchController.signal })
+            fetch(`${baseUrl}?group=${reqGroup}`, { signal: activeFetchController.signal })
                 .then(res => res.json())
                 .then(data => {
                     if (reqDB !== currentDB || reqGroup !== activeGroup) return;
 
-                    const tabId = Object.keys(tabGroupMap).find(key => tabGroupMap[key] === reqGroup);
                     const val = data[reqGroup];
 
                     if (val !== undefined) {
+                        // КРИТИЧЕСКАЯ ПРОВЕРКА: Наполняем буфер графика ТОЛЬКО из DBMain!
+                        if (reqDB === 'main' && reqGroup === 'f50') {
+                            const uSetiVal = val[1]; // Useti (индекс 1)
+                            const iAkbVal  = val[3]; // Iakb (индекс 3)
+
+                            pushChartData(uSetiVal, iAkbVal);
+
+                            if (currentTopMode === 'charts') {
+                                document.getElementById('val-useti').innerText = uSetiVal.toFixed(2);
+                                document.getElementById('val-iakb').innerText  = iAkbVal.toFixed(2);
+                                drawCanvasChart();
+                            }
+                        }
+
+                        // Отрисовка значений в карточках
+                        const tabId = Object.keys(tabGroupMap).find(key => tabGroupMap[key] === reqGroup);
                         if (['f50', 'f100'].includes(reqGroup)) {
-                            val.forEach((v, i) => { 
-                                const el = document.getElementById(`${tabId}_${i}`); 
-                                if(el) el.innerText = v.toFixed(2); 
-                            });
+                            val.forEach((v, i) => { const el = document.getElementById(`${tabId}_${i}`); if(el) el.innerText = v.toFixed(2); });
                         } else if (['i50', 'u50'].includes(reqGroup)) {
-                            val.forEach((v, i) => { 
-                                const el = document.getElementById(`${tabId}_${i}`); 
-                                if(el) el.innerText = v; 
-                            });
+                            val.forEach((v, i) => { const el = document.getElementById(`${tabId}_${i}`); if(el) el.innerText = v; });
                         } else if (['b32', 'b64', 'b96'].includes(reqGroup)) {
                             updateBitGroup(tabId, val);
-                            if (currentDB === 'params') {
-                                lastParamsMasks[reqGroup] = val;
-                            }
+                            if (currentDB === 'params') lastParamsMasks[reqGroup] = val;
                         }
                     }
 
@@ -422,8 +463,171 @@
             }
         }
 
-        // --- ЛОГИКА ЖУРНАЛА СОБЫТИЙ ---
+        // --- ЛОГИКА И ИНТЕРАКТИВ ГРАФИКОВ (CANVAS) ---
 
+        function changeChartSamples(val) {
+            maxChartPoints = parseInt(val, 10);
+            while (chartHistory.useti.length > maxChartPoints) chartHistory.useti.shift();
+            while (chartHistory.iakb.length > maxChartPoints) chartHistory.iakb.shift();
+            drawCanvasChart();
+        }
+
+        function changeChartScaleMode(val) {
+            chartScaleMode = val;
+            const inputsDiv = document.getElementById('fixed-scale-inputs');
+            inputsDiv.style.display = (val === 'fixed') ? 'flex' : 'none';
+            drawCanvasChart();
+        }
+
+        function pushChartData(useti, iakb) {
+            chartHistory.useti.push(useti);
+            chartHistory.iakb.push(iakb);
+            while (chartHistory.useti.length > maxChartPoints) chartHistory.useti.shift();
+            while (chartHistory.iakb.length > maxChartPoints) chartHistory.iakb.shift();
+        }
+
+        function downloadChartCSV() {
+            if (!chartHistory.useti.length) {
+                alert("Буфер графика пуст!");
+                return;
+            }
+
+            let csv = "N;Time_Offset_s;Useti_V;Iakb_A\r\n";
+            const intervalSec = POLL_INTERVAL_MS / 1000;
+            const total = chartHistory.useti.length;
+
+            for (let i = 0; i < total; i++) {
+                let timeOffset = ((i - total + 1) * intervalSec).toFixed(1);
+                let u = (chartHistory.useti[i] !== undefined) ? chartHistory.useti[i].toFixed(2) : "";
+                let iAkb = (chartHistory.iakb[i] !== undefined) ? chartHistory.iakb[i].toFixed(2) : "";
+
+                csv += `${i + 1};${timeOffset};${u};${iAkb}\r\n`;
+            }
+
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2,'0') + '-' + 
+                            String(now.getMinutes()).padStart(2,'0') + '-' + 
+                            String(now.getSeconds()).padStart(2,'0');
+
+            a.href = url;
+            a.download = `chart_samples_${timeStr}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function drawCanvasChart() {
+            const canvas = document.getElementById('rtChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+
+            const W = canvas.width;
+            const H = canvas.height;
+            const pad = 45; // Отступ под подписи осей
+
+            ctx.clearRect(0, 0, W, H);
+
+            // Координатная сетка
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x = pad; x < W - pad; x += (W - 2 * pad) / 6) { ctx.moveTo(x, pad); ctx.lineTo(x, H - pad); }
+            for (let y = pad; y < H - pad; y += (H - 2 * pad) / 4) { ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); }
+            ctx.stroke();
+
+            // Определение границ для Useti
+            let uMin, uMax;
+            if (chartScaleMode === 'fixed') {
+                uMin = parseFloat(document.getElementById('useti-min').value);
+                uMax = parseFloat(document.getElementById('useti-max').value);
+            } else {
+                uMin = chartHistory.useti.length ? Math.min(...chartHistory.useti) : -300;
+                uMax = chartHistory.useti.length ? Math.max(...chartHistory.useti) : 300;
+                if (uMin === uMax) { uMin -= 5; uMax += 5; }
+            }
+
+            // Определение границ для Iakb
+            let iMin, iMax;
+            if (chartScaleMode === 'fixed') {
+                iMin = parseFloat(document.getElementById('iakb-min').value);
+                iMax = parseFloat(document.getElementById('iakb-max').value);
+            } else {
+                iMin = chartHistory.iakb.length ? Math.min(...chartHistory.iakb) : -100;
+                iMax = chartHistory.iakb.length ? Math.max(...chartHistory.iakb) : 100;
+                if (iMin === iMax) { iMin -= 1; iMax += 1; }
+            }
+
+            // Рисование нулевой линии (если ноль внутри диапазона)
+            drawZeroLine(ctx, uMin, uMax, W, H, pad, '#1e3a8a');
+            drawZeroLine(ctx, iMin, iMax, W, H, pad, '#78350f');
+
+            // Рисуем сигналы
+            drawLine(ctx, chartHistory.useti, '#3498db', W, H, pad, uMin, uMax);
+            drawLine(ctx, chartHistory.iakb, '#f1c40f', W, H, pad, iMin, iMax);
+
+            // Подписи пределов осей
+            ctx.font = '11px sans-serif';
+            
+            // Useti limits (Слева, синий)
+            ctx.fillStyle = '#3498db';
+            ctx.fillText((uMax >= 0 ? '+' : '') + uMax.toFixed(0) + 'V', 5, pad + 10);
+            ctx.fillText((uMin >= 0 ? '+' : '') + uMin.toFixed(0) + 'V', 5, H - pad);
+
+            // Iakb limits (Справа, желтый)
+            ctx.fillStyle = '#f1c40f';
+            ctx.fillText((iMax >= 0 ? '+' : '') + iMax.toFixed(0) + 'A', W - pad + 5, pad + 10);
+            ctx.fillText((iMin >= 0 ? '+' : '') + iMin.toFixed(0) + 'A', W - pad + 5, H - pad);
+        }
+
+        function drawZeroLine(ctx, min, max, W, H, pad, color) {
+            if (min < 0 && max > 0) {
+                const normZero = (0 - min) / (max - min);
+                const yZero = H - pad - normZero * (H - 2 * pad);
+                
+                ctx.save();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(pad, yZero);
+                ctx.lineTo(W - pad, yZero);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function drawLine(ctx, data, color, W, H, pad, min, max) {
+            if (data.length < 2) return;
+
+            const stepX = (W - 2 * pad) / (maxChartPoints - 1);
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            data.forEach((v, i) => {
+                const x = pad + i * stepX;
+                let normV = (v - min) / (max - min);
+                if (normV < 0) normV = 0;
+                if (normV > 1) normV = 1;
+
+                const y = H - pad - normV * (H - 2 * pad);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+
+            ctx.stroke();
+        }
+
+        // --- ЛОГИКА ЖУРНАЛА СОБЫТИЙ ---
         function renderLogTable(logs) {
             const tbody = document.getElementById('log-table-body');
             if (!logs || logs.length === 0) {
@@ -484,7 +688,6 @@
         }
 
         // --- ЛОГИКА ЗАПИСИ (EDIT / WRITE) ---
-
         function editParam(group, index, name) {
             if (currentDB !== 'params') return;
 

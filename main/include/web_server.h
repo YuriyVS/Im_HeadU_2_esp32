@@ -19,6 +19,7 @@ extern esp_err_t api_data_all_handler(httpd_req_t *req);
 extern esp_err_t api_params_all_handler(httpd_req_t *req);
 extern esp_err_t api_param_write_handler(httpd_req_t *req);
 extern esp_err_t api_logs_get_handler(httpd_req_t *req);
+extern esp_err_t api_logs_export_handler(httpd_req_t *req);
 extern httpd_handle_t start_webserver(void);
 //extern const char *index_html;
 

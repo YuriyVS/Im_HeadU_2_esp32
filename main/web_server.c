@@ -471,6 +471,61 @@ esp_err_t api_logs_get_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
+esp_err_t api_logs_export_handler(httpd_req_t *req) {
+    // 1. Запрашиваем из STM32 общее количество записей в кольце (Адрес 2000)
+    uint16_t stats_regs[3];
+    mb_param_request_t req_stats = {
+        .slave_addr = SLAVE_ADDR, .command = 0x03, .reg_start = 2000, .reg_size = 3
+    };
+    
+    uint16_t total_in_ring = 0;
+    if (mbc_master_send_request(&req_stats, stats_regs) == ESP_OK) {
+        total_in_ring = stats_regs[2];
+    }
+
+    // 2. Устанавливаем HTTP-заголовки скачивания файла
+    httpd_resp_set_type(req, "text/csv; charset=utf-8");
+    httpd_resp_set_hdr(req, "Content-Disposition", "attachment; filename=\"event_log.csv\"");
+
+    // 3. Отправляем заголовок таблицы CSV (разделитель точка с запятой ';' для Excel)
+    const char *csv_header = "N;Timestamp_ms;Event_ID;Severity;Value;Param_ID\r\n";
+    httpd_resp_send_chunk(req, csv_header, strlen(csv_header));
+
+    // 4. Потоково вычитываем весь журнал из STM32 пачками по 12 записей и отправляем в сеть
+    LogEntry_t logs[15];
+    uint8_t fetched = 0;
+    char row_buf[128];
+
+    for (uint16_t offset = 0; offset < total_in_ring; offset += 12) {
+        uint8_t count_to_read = (total_in_ring - offset > 12) ? 12 : (total_in_ring - offset);
+        
+        if (modbus_read_log_page(offset, count_to_read, logs, &fetched) == ESP_OK) {
+            for (uint8_t i = 0; i < fetched; i++) {
+                const char* sev_str = (logs[i].severity == 1) ? "WARN" : 
+                                     (logs[i].severity == 2) ? "ALARM" : "INFO";
+                
+                int len = snprintf(row_buf, sizeof(row_buf), 
+                    "%u;%lu;0x%04X;%s;%.2f;%lu\r\n",
+                    offset + i + 1,
+                    (unsigned long)logs[i].timestamp,
+                    logs[i].event_id,
+                    sev_str,
+                    logs[i].value,
+                    (unsigned long)logs[i].param_id
+                );
+                // Отправляем строку чанком
+                httpd_resp_send_chunk(req, row_buf, len);
+            }
+        } else {
+            break; // Обрыв связи по Modbus
+        }
+    }
+
+    // 5. Завершаем поток передачи (пустой чанк)
+    httpd_resp_send_chunk(req, NULL, 0);
+    return ESP_OK;
+}
+
 // 4. Функция запуска самого веб-сервера
 httpd_handle_t start_webserver(void) {
     httpd_handle_t server = NULL;
@@ -522,6 +577,14 @@ httpd_handle_t start_webserver(void) {
         .user_ctx = NULL
         };
         httpd_register_uri_handler(server, &uri_logs_get);
+
+        httpd_uri_t uri_logs_export = {
+        .uri      = "/api/logs_export",
+        .method   = HTTP_GET,
+        .handler  = api_logs_export_handler,
+        .user_ctx = NULL
+        };
+        httpd_register_uri_handler(server, &uri_logs_export);
         
         return server;
     }
