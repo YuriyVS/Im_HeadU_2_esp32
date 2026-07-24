@@ -16,7 +16,8 @@ idf_component_register(
     trace_buffer.c
 
     INCLUDE_DIRS 
-    "include"       # optional, add here public include directories    
+    "include"       # optional, add here public include directories 
+    "."   
 
     PRIV_INCLUDE_DIRS   # optional, add here private include directories
     REQUIRES            # optional, list the public requirements (component names)
@@ -27,6 +28,7 @@ idf_component_register(
     esp_mm
     efuse
     json    
+    esp_http_client     # Добавлено для работы с ThingsBoard Cloud HTTP API
 
     PRIV_REQUIRES       # optional, list the private requirements
     EMBED_TXTFILES "index.html"

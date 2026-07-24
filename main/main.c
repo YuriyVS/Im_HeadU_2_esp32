@@ -18,6 +18,19 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include "esp_http_client.h"
+
+// Access Token из вашего кабинета ThingsBoard
+#define TB_ACCESS_TOKEN "fjvB6ijKGxSdO26AkjCZ"
+#define TB_URL "http://thingsboard.cloud/api/v1/" TB_ACCESS_TOKEN "/telemetry"
+
+// Учетные данные вашего роутера для выхода в интернет
+#define ROUTER_WIFI_SSID "A05sYVS"
+#define ROUTER_WIFI_PASS "6afv942dwnxim5s"
+
+// Глобальный флаг успешного получения IP от роутера
+static bool s_sta_connected = false;
+static bool s_sta_has_ip = false;
 
 // Определения приоритетов
 #define PRIORITY_SPI_COMM        10  // Критическая связь с STM32
@@ -34,6 +47,7 @@
 void vTaskSPI(void *pvParameters);
 void vTaskModbus(void *pvParameters);
 void vTaskNetwork(void *pvParameters);
+void vTaskThingsBoard(void *pvParameters);
 
 void create_system_tasks(void);
 
@@ -100,7 +114,15 @@ void create_system_tasks(void) {
                 NULL, 
                 PRIORITY_NETWORK_APP, 
                 NULL);
-    
+
+    // 4. Задача отправки телеметрии в ThingsBoard Cloud
+    // xTaskCreate(vTaskThingsBoard, 
+    //             "TB_Task", 
+    //             6144, 
+    //             NULL, 
+    //             3, 
+    //             NULL); 
+
     ESP_LOGI("SYS", "Все задачи системы инициализированы.");
 }
 
@@ -245,6 +267,38 @@ void IRAM_ATTR spi_isr_handler(void* arg) {
 }
 
 // Обработчик событий: пишет в лог, когда кто-то подключается или отключается от ESP32
+// static void wifi_event_handler(void* arg, esp_event_base_t event_base,
+//                                int32_t event_id, void* event_data) {
+//     // --- События SoftAP (Точка доступа) ---
+//     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STACONNECTED) {
+//         wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
+//         ESP_LOGI("NET", "Смартфон подключился к AP, MAC: " MACSTR ", AID=%d",
+//                  MAC2STR(event->mac), event->aid);
+//     } 
+//     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STADISCONNECTED) {
+//         wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
+//         ESP_LOGI("NET", "Смартфон отключился от AP, MAC: " MACSTR ", AID=%d",
+//                  MAC2STR(event->mac), event->aid);
+//     }
+    
+//     // --- События STA (Клиент роутера) ---
+//     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+//         ESP_LOGI("NET", "Wi-Fi STA запущен, пробуем подключиться к роутеру...");
+//         esp_wifi_connect();
+//     } 
+//     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+//         s_sta_connected = false;
+//         s_sta_has_ip = false;
+//         ESP_LOGW("NET", "Соединение с роутером отсутствует. Следующая попытка по таймеру.");
+//     } 
+//     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+//         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+//         ESP_LOGI("NET", "Получен IP от роутера: " IPSTR, IP2STR(&event->ip_info.ip));
+//         s_sta_connected = true;
+//         s_sta_has_ip = true;
+//     }
+// }
+
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data) {
     if (event_id == WIFI_EVENT_AP_STACONNECTED) {
@@ -257,6 +311,105 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                  MAC2STR(event->mac), event->aid);
     }
 }
+
+// void vTaskNetwork(void *pvParameters) {
+//     ESP_LOGI("NET", "Задача Network запущена. Инициализация Wi-Fi AP+STA...");
+
+//     // 1. Инициализация NVS флеш-памяти
+//     esp_err_t ret = nvs_flash_init();
+//     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+//         ESP_ERROR_CHECK(nvs_flash_erase());
+//         ret = nvs_flash_init();
+//     }
+//     ESP_ERROR_CHECK(ret);
+
+//     // 2. Инициализация LwIP и системных петлей событий
+//     ESP_ERROR_CHECK(esp_netif_init());
+//     ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+//     esp_netif_create_default_wifi_ap();
+//     esp_netif_create_default_wifi_sta();
+
+//     // 3. Конфигурация Wi-Fi стека
+//     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+//     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+//     // 4. Регистрация обработчиков событий
+//     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
+//                                                         ESP_EVENT_ANY_ID,
+//                                                         &wifi_event_handler,
+//                                                         NULL,
+//                                                         NULL));
+//     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
+//                                                         IP_EVENT_STA_GOT_IP,
+//                                                         &wifi_event_handler,
+//                                                         NULL,
+//                                                         NULL));
+
+//     // 5. Конфигурация AP (Отлаженная настройка SoftAP)
+//     wifi_config_t ap_config = {
+//         .ap = {
+//             .ssid = WIFI_AP_SSID,
+//             .ssid_len = strlen(WIFI_AP_SSID),
+//             .channel = WIFI_AP_CHANNEL,
+//             .password = WIFI_AP_PASS,
+//             .max_connection = MAX_STA_CONN,
+//             .authmode = WIFI_AUTH_WPA2_PSK,
+//             .pmf_cfg = {
+//                 .required = false,
+//             },
+//         },
+//     };
+//     if (strlen(WIFI_AP_PASS) == 0) {
+//         ap_config.ap.authmode = WIFI_AUTH_OPEN; 
+//     }
+
+//     // 6. Конфигурация STA (Подключение к роутеру)
+//     wifi_config_t sta_config = {
+//         .sta = {
+//             .ssid = ROUTER_WIFI_SSID,
+//             .password = ROUTER_WIFI_PASS,
+//             .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+//         },
+//     };
+
+//     // 7. Установка совмещенного режима APSTA и старт
+//     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+//     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
+//     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
+//     ESP_ERROR_CHECK(esp_wifi_start());
+
+//     // Фиксация ширины канала 20 МГц для Точки Доступа
+//     ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_AP, WIFI_BW_HT20));
+
+//     configure_ap_ip(); 
+//     ESP_LOGI("NET", "Точка доступа поднята с IP 192.168.10.1 и SSID: %s", WIFI_AP_SSID);
+
+//     start_webserver();
+
+//     // Подключение вочдога после инициализации
+//     esp_task_wdt_add(NULL);
+
+//     uint32_t reconnect_counter = 0;
+
+//     while (1) {
+//         esp_task_wdt_reset();
+
+//         // Если связь с роутером потеряна, делаем попытку реконнекта раз в 20 секунд
+//         if (!s_sta_connected) {
+//             reconnect_counter++;
+//             if (reconnect_counter >= 20) {
+//                 reconnect_counter = 0;
+//                 ESP_LOGI("NET", "Попытка повторного подключения к роутеру...");
+//                 esp_wifi_connect();
+//             }
+//         } else {
+//             reconnect_counter = 0;
+//         }
+
+//         vTaskDelay(pdMS_TO_TICKS(1000)); 
+//     }
+// }
 
 void vTaskNetwork(void *pvParameters) {
     ESP_LOGI("NET", "Задача Network запущена. Старт инициализации Wi-Fi SoftAP...");
@@ -335,4 +488,60 @@ void vTaskNetwork(void *pvParameters) {
         // Задержка 
         vTaskDelay(pdMS_TO_TICKS(1000)); 
     }
+}
+
+void vTaskThingsBoard(void *pvParameters) {
+    ESP_LOGI("TB_HTTP", "Задача ThingsBoard Cloud запущена.");
+
+    char json_payload[256];
+
+    esp_http_client_config_t config = {
+        .url = TB_URL,
+        .method = HTTP_METHOD_POST,
+        .timeout_ms = 5000,
+    };
+
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    esp_http_client_set_header(client, "Content-Type", "application/json");
+
+    while (1) {
+        // Отправляем телеметрию только если получен IP от роутера
+        if (s_sta_has_ip) {
+            if (xSemaphoreTake(xDataMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+                snprintf(json_payload, sizeof(json_payload),
+                    "{"
+                      "\"UsetiV\":%.2f,"
+                      "\"IakbA\":%.2f,"
+                      "\"GenFreq\":%.2f,"
+                      "\"b32\":%u"
+                    "}",
+                    DBMain.f50.UsetiV,
+                    DBMain.f50.IakbA,
+                    DBMain.f50.GenFreq,
+                    (unsigned int)DBMain.b32.all
+                );
+                xSemaphoreGive(xDataMutex);
+
+                esp_http_client_set_post_field(client, json_payload, strlen(json_payload));
+                esp_err_t err = esp_http_client_perform(client);
+
+                if (err == ESP_OK) {
+                    int status_code = esp_http_client_get_status_code(client);
+                    if (status_code == 200) {
+                        ESP_LOGI("TB_HTTP", "Успешно отправлено в ThingsBoard [%d]: %s", status_code, json_payload);
+                    } else {
+                        ESP_LOGW("TB_HTTP", "Отклик сервера: HTTP %d", status_code);
+                    }
+                } else {
+                    ESP_LOGE("TB_HTTP", "Ошибка HTTP: %s", esp_err_to_name(err));
+                }
+            }
+        }
+
+        // Интервал отправки — 10 секунд
+        vTaskDelay(pdMS_TO_TICKS(10000));
+    }
+
+    esp_http_client_cleanup(client);
+    vTaskDelete(NULL);
 }
